@@ -2,20 +2,20 @@
 import Foundation
 
 public struct FormField: Codable, Equatable {
+    /// `choice` for dropdown fields (espanso `type: choice`); `nil` for plain text.
     public enum FieldKind: String, Codable, Equatable {
-        case list
+        case choice
     }
 
-    /// `list` for dropdown fields; `nil` for plain text fields.
     public var type: FieldKind?
-    /// Default value shown in the text input.
+    /// Default value pre-filled in the text input.
     public var `default`: String?
-    /// Whether the text input is multiline.
+    /// Whether the text input accepts multiple lines.
     public var multiline: Bool?
-    /// Choices shown in the dropdown. Only meaningful when `type == .list`.
+    /// Options shown in the dropdown. Only meaningful when `type == .choice`.
     public var values: [String]?
 
-    public var isDropdown: Bool { type == .list }
+    public var isDropdown: Bool { type == .choice }
 
     public init(
         type: FieldKind? = nil,
@@ -34,6 +34,22 @@ public struct FormField: Codable, Equatable {
 
     /// A dropdown field with the given options.
     public static func dropdown(_ values: [String] = [""]) -> FormField {
-        FormField(type: .list, values: values)
+        FormField(type: .choice, values: values)
+    }
+
+    // MARK: - Codable
+
+    private enum CodingKeys: String, CodingKey {
+        case type, `default`, multiline, values
+    }
+
+    /// Custom encode using encodeIfPresent so nil fields are omitted entirely from YAML,
+    /// rather than being written as `null` by the synthesized encoder.
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encodeIfPresent(type,      forKey: .type)
+        try c.encodeIfPresent(`default`, forKey: .default)
+        try c.encodeIfPresent(multiline, forKey: .multiline)
+        try c.encodeIfPresent(values,    forKey: .values)
     }
 }

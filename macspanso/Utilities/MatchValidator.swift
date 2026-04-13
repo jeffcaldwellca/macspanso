@@ -7,6 +7,7 @@ public enum ValidationError: Equatable {
     case unresolvedVarReference(String)  // var name
     case duplicateVarName(String)         // var name
     case emptyShellCmd
+    case emptyFormTemplate
 }
 
 public enum MatchValidator {
@@ -46,6 +47,11 @@ public enum MatchValidator {
         if thisLiteralTriggers.contains(where: { otherTriggers.contains($0) })
             || thisRegexTriggers.contains(where: { otherRegexTriggers.contains($0) }) {
             errors.append(.duplicateTrigger)
+        }
+
+        // Form template must not be empty
+        if let form = match.form, form.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            errors.append(.emptyFormTemplate)
         }
 
         // {{varName}} references in replace must resolve to declared vars

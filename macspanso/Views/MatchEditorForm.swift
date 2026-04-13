@@ -242,6 +242,7 @@ struct MatchEditorForm: View {
                         set: { draft.formFields = $0.isEmpty ? nil : $0 }
                     )
                 )
+                validationLabel(for: .emptyFormTemplate, message: "Form template is required")
             } else {
                 TextEditor(text: Binding(
                     get: { draft.replace ?? "" },
@@ -323,14 +324,26 @@ struct MatchEditorForm: View {
     private func save() {
         revalidate()
         guard validationErrors.isEmpty else { return }
+        var matchToSave = draft
+        // Silently strip empty strings from dropdown option lists before writing to disk.
+        if let fields = matchToSave.formFields, !fields.isEmpty {
+            var cleaned: [String: FormField] = [:]
+            for (name, field) in fields {
+                guard field.isDropdown else { cleaned[name] = field; continue }
+                var f = field
+                f.values = (f.values ?? []).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+                if !(f.values?.isEmpty ?? true) { cleaned[name] = f }
+            }
+            matchToSave.formFields = cleaned.isEmpty ? nil : cleaned
+        }
         do {
             if isNew {
-                try store.add(draft)
+                try store.add(matchToSave)
             } else {
-                try store.update(draft)
+                try store.update(matchToSave)
             }
             saveError = nil
-            onSave(draft)
+            onSave(matchToSave)
         } catch {
             saveError = error.localizedDescription
         }

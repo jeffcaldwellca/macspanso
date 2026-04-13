@@ -25,7 +25,7 @@ struct FormFieldsSection: View {
                 .frame(minHeight: 80)
                 .overlay(RoundedRectangle(cornerRadius: 5).stroke(.separator))
                 .onChange(of: formTemplate) { _ in pruneOrphanedFields() }
-            Text("Use {{placeholder}} to mark each fill-in blank.")
+            Text("Use [[placeholder]] to mark each fill-in blank.")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
         }
@@ -62,9 +62,10 @@ struct FormFieldsSection: View {
     // MARK: - Helpers
 
     /// Placeholder names found in the template, in appearance order, deduplicated.
+    /// Espanso form syntax uses [[name]], not {{name}} (which is for variable references).
     private var placeholderNames: [String] {
         guard let regex = try? NSRegularExpression(
-            pattern: #"\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}"#
+            pattern: #"\[\[([a-zA-Z_][a-zA-Z0-9_]*)\]\]"#
         ) else { return [] }
         let ns = formTemplate as NSString
         let full = NSRange(location: 0, length: ns.length)
@@ -95,7 +96,7 @@ struct FormFieldCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("{{\(name)}}")
+                Text("[[\(name)]]")
                     .font(.system(.body, design: .monospaced))
                     .fontWeight(.medium)
                 Spacer()
@@ -191,7 +192,7 @@ struct FormFieldCard: View {
 
     private func switchToDropdown(_ dropdown: Bool) {
         if dropdown {
-            field = FormField(type: .list, values: field.values ?? [""])
+            field = .dropdown(field.values ?? [""])
         } else {
             field = FormField(default: field.default, multiline: nil)
         }

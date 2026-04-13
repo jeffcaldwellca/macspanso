@@ -112,9 +112,21 @@ struct MatchRowView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(match.primaryTrigger)
-                .font(.system(.body, design: .monospaced))
-                .lineLimit(1)
+            HStack(spacing: 4) {
+                Text(match.primaryTrigger)
+                    .font(.system(.body, design: .monospaced))
+                    .lineLimit(1)
+                if match.form != nil {
+                    Text("form")
+                        .font(.caption2)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1)
+                        .background(Color.accentColor.opacity(0.15))
+                        .foregroundStyle(Color.accentColor)
+                        .clipShape(RoundedRectangle(cornerRadius: 3))
+                }
+            }
             Text(match.replacementPreview)
                 .font(.caption)
                 .foregroundStyle(.secondary)

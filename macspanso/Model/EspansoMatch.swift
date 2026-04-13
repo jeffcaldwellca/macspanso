@@ -55,16 +55,32 @@ public struct EspansoMatch: Identifiable, Codable, Equatable {
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         self.id            = UUID()
-        self.trigger       = try c.decodeIfPresent(String.self,            forKey: .trigger)
-        self.triggers      = try c.decodeIfPresent([String].self,          forKey: .triggers)
-        self.regex         = try c.decodeIfPresent(String.self,            forKey: .regex)
-        self.replace       = try c.decodeIfPresent(String.self,            forKey: .replace)
-        self.form          = try c.decodeIfPresent(String.self,            forKey: .form)
+        self.trigger       = try c.decodeIfPresent(String.self,              forKey: .trigger)
+        self.triggers      = try c.decodeIfPresent([String].self,            forKey: .triggers)
+        self.regex         = try c.decodeIfPresent(String.self,              forKey: .regex)
+        self.replace       = try c.decodeIfPresent(String.self,              forKey: .replace)
+        self.form          = try c.decodeIfPresent(String.self,              forKey: .form)
         self.formFields    = try c.decodeIfPresent([String: FormField].self, forKey: .formFields)
-        self.vars          = try c.decodeIfPresent([EspansoVar].self,      forKey: .vars)
-        self.label         = try c.decodeIfPresent(String.self,            forKey: .label)
-        self.propagateCase = try c.decodeIfPresent(Bool.self,              forKey: .propagateCase)
-        self.word          = try c.decodeIfPresent(Bool.self,              forKey: .word)
+        self.vars          = try c.decodeIfPresent([EspansoVar].self,        forKey: .vars)
+        self.label         = try c.decodeIfPresent(String.self,              forKey: .label)
+        self.propagateCase = try c.decodeIfPresent(Bool.self,                forKey: .propagateCase)
+        self.word          = try c.decodeIfPresent(Bool.self,                forKey: .word)
+        // `form:` takes precedence — clear `replace:` if both are present in malformed YAML.
+        if self.form != nil { self.replace = nil }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encodeIfPresent(trigger,       forKey: .trigger)
+        try c.encodeIfPresent(triggers,      forKey: .triggers)
+        try c.encodeIfPresent(regex,         forKey: .regex)
+        try c.encodeIfPresent(replace,       forKey: .replace)
+        try c.encodeIfPresent(form,          forKey: .form)
+        try c.encodeIfPresent(formFields,    forKey: .formFields)
+        try c.encodeIfPresent(vars,          forKey: .vars)
+        try c.encodeIfPresent(label,         forKey: .label)
+        try c.encodeIfPresent(propagateCase, forKey: .propagateCase)
+        try c.encodeIfPresent(word,          forKey: .word)
     }
 
     // Convenience: the primary trigger string for display
