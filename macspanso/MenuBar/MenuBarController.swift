@@ -107,15 +107,15 @@ final class MenuBarController {
     private func showMatchManager(newMatch: Bool) {
         if windowController == nil {
             let wc = MatchManagerWindowController(store: store, processManager: processManager)
-            // Nil our reference when the window closes so it can be deallocated.
-            if let window = wc.window {
-                NotificationCenter.default.addObserver(
-                    self,
-                    selector: #selector(windowDidClose(_:)),
-                    name: NSWindow.willCloseNotification,
-                    object: window
-                )
-            }
+            // window is guaranteed non-nil: MatchManagerWindowController calls
+            // super.init(window: panel) so window is always set after init.
+            let window = wc.window!
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(windowDidClose(_:)),
+                name: NSWindow.willCloseNotification,
+                object: window
+            )
             windowController = wc
         }
         windowController?.showWindow(nil)

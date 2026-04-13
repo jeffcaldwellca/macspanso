@@ -3,6 +3,7 @@ import SwiftUI
 
 struct MatchManagerView: View {
     @ObservedObject var store: EspansoConfigStore
+    // Passed through to child views in later tasks (toolbar state indicator).
     @ObservedObject var processManager: EspansoProcessManager
 
     @State private var selectedMatchID: UUID? = nil
@@ -10,6 +11,8 @@ struct MatchManagerView: View {
     @State private var searchText: String = ""
 
     var body: some View {
+        // animation() on the ZStack drives both entry and exit transitions for
+        // ExternalEditBanner; placing it on the banner itself only animates entry.
         ZStack(alignment: .top) {
             HSplitView {
                 MatchListView(
@@ -32,9 +35,9 @@ struct MatchManagerView: View {
                     onKeep: { store.dismissExternalChangeNotice() }
                 )
                 .transition(.move(edge: .top).combined(with: .opacity))
-                .animation(.easeInOut(duration: 0.2), value: store.externallyChangedURL != nil)
             }
         }
+        .animation(.easeInOut(duration: 0.2), value: store.externallyChangedURL != nil)
         .onReceive(NotificationCenter.default.publisher(for: .focusNewMatch)) { _ in
             selectedMatchID = nil
         }

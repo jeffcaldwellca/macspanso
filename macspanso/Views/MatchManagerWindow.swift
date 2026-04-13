@@ -21,8 +21,11 @@ final class MatchManagerWindowController: NSWindowController {
         panel.center()
         panel.isReleasedWhenClosed = false
 
+        // Use NSHostingController (not NSHostingView) so SwiftUI gets full responder-chain
+        // integration, keyboard focus cycling, and scene-environment setup.
         let rootView = MatchManagerView(store: store, processManager: processManager)
-        panel.contentView = NSHostingView(rootView: rootView)
+        let hc = NSHostingController(rootView: rootView)
+        panel.contentViewController = hc
 
         super.init(window: panel)
     }
