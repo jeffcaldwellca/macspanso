@@ -13,6 +13,8 @@ struct MatchEditorForm: View {
     @State private var validationErrors: [ValidationError] = []
     @State private var saveError: String? = nil
     @State private var showUnsavedAlert: Bool = false
+    @State private var triggerEntryIDs: [UUID] = []
+    @State private var savedTriggers: [String]? = nil
 
     init(
         match: EspansoMatch,
@@ -28,6 +30,7 @@ struct MatchEditorForm: View {
         self.onCancel = onCancel
         _draft = State(initialValue: match)
         _useRegex = State(initialValue: match.regex != nil)
+        _triggerEntryIDs = State(initialValue: (match.triggers ?? []).map { _ in UUID() })
     }
 
     private var isNew: Bool { sourceFile == nil }
@@ -130,19 +133,26 @@ struct MatchEditorForm: View {
                 .frame(width: 120)
                 .onChange(of: useRegex) { regex in
                     if regex {
+                        savedTriggers = draft.triggers  // preserve for restore
                         draft.regex = draft.trigger ?? draft.triggers?.first ?? ""
                         draft.trigger = nil
                         draft.triggers = nil
+                        triggerEntryIDs = []
                     } else {
                         draft.trigger = draft.regex ?? ""
                         draft.regex = nil
+                        if let saved = savedTriggers {
+                            draft.triggers = saved
+                            triggerEntryIDs = saved.map { _ in UUID() }
+                            savedTriggers = nil
+                        }
                     }
                 }
             }
 
             // Alternate triggers (multi-trigger)
             if !useRegex {
-                ForEach(Array((draft.triggers ?? []).enumerated()), id: \.offset) { i, _ in
+                ForEach(Array(zip(triggerEntryIDs, (draft.triggers ?? []).indices)), id: \.0) { _, i in
                     HStack {
                         TextField("Alternate trigger…", text: Binding(
                             get: { draft.triggers?[i] ?? "" },
@@ -154,6 +164,7 @@ struct MatchEditorForm: View {
                         Button {
                             if i < (draft.triggers?.count ?? 0) {
                                 draft.triggers?.remove(at: i)
+                                triggerEntryIDs.remove(at: i)
                                 if draft.triggers?.isEmpty == true { draft.triggers = nil }
                             }
                         } label: {
@@ -171,8 +182,10 @@ struct MatchEditorForm: View {
                         ts.append("")
                         draft.triggers = ts
                         draft.trigger = nil
+                        triggerEntryIDs = ts.map { _ in UUID() }
                     } else {
                         draft.triggers?.append("")
+                        triggerEntryIDs.append(UUID())
                     }
                 } label: {
                     Label("Add alternate trigger", systemImage: "plus.circle")
@@ -198,7 +211,8 @@ struct MatchEditorForm: View {
             TextEditor(text: Binding(
                 get: { draft.replace ?? draft.form ?? "" },
                 set: { v in
-                    if draft.form != nil { draft.form = v } else { draft.replace = v }
+                    let value = v.isEmpty ? nil : v
+                    if draft.form != nil { draft.form = value } else { draft.replace = value }
                 }
             ))
             .font(.system(.body, design: .monospaced))
@@ -240,7 +254,7 @@ struct MatchEditorForm: View {
             get: { draft.trigger ?? draft.regex ?? draft.triggers?.first ?? "" },
             set: { v in
                 if useRegex { draft.regex = v }
-                else if draft.triggers != nil { draft.triggers?[0] = v }
+                else if draft.triggers?.isEmpty == false { draft.triggers?[0] = v }
                 else { draft.trigger = v }
             }
         )
@@ -254,7 +268,10 @@ struct MatchEditorForm: View {
     }
 
     private func revalidate() {
-        validationErrors = MatchValidator.validate(draft, existingMatches: store.allMatches)
+        validationErrors = MatchValidator.validate(
+            draft,
+            existingMatches: store.allMatches.filter { $0.id != draft.id }
+        )
     }
 
     @ViewBuilder
