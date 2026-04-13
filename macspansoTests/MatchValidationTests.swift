@@ -64,6 +64,16 @@ final class MatchValidationTests: XCTestCase {
         XCTAssertTrue(errors.contains(.emptyShellCmd))
     }
 
+    func testShellVarWithNilCmdIsInvalid() {
+        let match = EspansoMatch(
+            trigger: "::shell",
+            replace: "{{out}}",
+            vars: [EspansoVar(name: "out", type: .shell, params: nil)]
+        )
+        let errors = MatchValidator.validate(match, existingMatches: [])
+        XCTAssertTrue(errors.contains(.emptyShellCmd))
+    }
+
     func testValidMatchHasNoErrors() {
         let match = EspansoMatch(trigger: "::sig", replace: "Best regards,\nJeff")
         let errors = MatchValidator.validate(match, existingMatches: [])
