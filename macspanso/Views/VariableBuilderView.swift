@@ -15,15 +15,20 @@ struct VariableBuilderView: View {
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
 
-            ForEach(varList.indices, id: \.self) { i in
+            ForEach(Array(varList.enumerated()), id: \.element.name) { i, _ in
                 VarCardView(
                     variable: Binding(
-                        get: { varList[i] },
-                        set: { vars?[i] = $0 }
+                        get: { i < (vars?.count ?? 0) ? vars![i] : EspansoVar(name: "", type: .echo) },
+                        set: { newValue in
+                            if vars == nil { vars = [] }
+                            if i < vars!.count { vars![i] = newValue }
+                        }
                     ),
                     onDelete: {
-                        vars?.remove(at: i)
-                        if vars?.isEmpty == true { vars = nil }
+                        if i < (vars?.count ?? 0) {
+                            vars?.remove(at: i)
+                            if vars?.isEmpty == true { vars = nil }
+                        }
                     }
                 )
             }
@@ -36,13 +41,16 @@ struct VariableBuilderView: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(Color.accentColor)
-            .sheet(isPresented: $showTypePicker) {
-                VarTypePickerSheet { type in
-                    let newVar = EspansoVar(name: "var\((varList.count + 1))", type: type)
-                    if vars == nil { vars = [] }
-                    vars?.append(newVar)
-                    showTypePicker = false
-                }
+        }
+        .sheet(isPresented: $showTypePicker) {
+            VarTypePickerSheet { type in
+                let existing = Set(varList.map(\.name))
+                var n = varList.count + 1
+                while existing.contains("var\(n)") { n += 1 }
+                let newVar = EspansoVar(name: "var\(n)", type: type)
+                if vars == nil { vars = [] }
+                vars?.append(newVar)
+                showTypePicker = false
             }
         }
     }
@@ -137,7 +145,7 @@ struct VarCardView: View {
                     return arr.joined(separator: "\n")
                 },
                 set: { text in
-                    let choices = text.components(separatedBy: "\n").filter { !$0.isEmpty }
+                    let choices = text.components(separatedBy: "\n")
                     if variable.params == nil { variable.params = [:] }
                     variable.params?["choices"] = .array(choices)
                 }
@@ -161,6 +169,7 @@ struct VarTypePickerSheet: View {
         .random:    "Random choice from a list",
         .form:      "Form field (for use inside a form match)",
         .echo:      "A static string value",
+        .match:     "Re-uses the output of another match",
     ]
 
     var body: some View {
