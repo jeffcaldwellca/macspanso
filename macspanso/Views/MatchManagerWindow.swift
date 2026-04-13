@@ -33,15 +33,23 @@ final class MatchManagerWindowController: NSWindowController {
     required init?(coder: NSCoder) { fatalError("not used") }
 
     func focusNewMatch() {
-        // Delay by one run-loop cycle so SwiftUI has time to render MatchManagerView
-        // and set up its .onReceive subscriber before the notification fires.
-        // Without this, the notification fires into the void on first window open.
+        postDelayed(.focusNewMatch)
+    }
+
+    func focusAbout() {
+        postDelayed(.focusAbout)
+    }
+
+    /// Delays one run-loop cycle so SwiftUI has rendered MatchManagerView
+    /// and wired up its .onReceive subscribers before the notification fires.
+    private func postDelayed(_ name: Notification.Name) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            NotificationCenter.default.post(name: .focusNewMatch, object: nil)
+            NotificationCenter.default.post(name: name, object: nil)
         }
     }
 }
 
 extension Notification.Name {
     static let focusNewMatch = Notification.Name("com.macspanso.focusNewMatch")
+    static let focusAbout    = Notification.Name("com.macspanso.focusAbout")
 }

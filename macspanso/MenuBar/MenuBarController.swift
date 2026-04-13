@@ -88,6 +88,11 @@ final class MenuBarController {
         }
 
         menu.addItem(.separator())
+        let aboutItem = NSMenuItem(title: "About macspanso",
+                                   action: #selector(openAbout), keyEquivalent: "")
+        aboutItem.target = self
+        menu.addItem(aboutItem)
+
         let quitItem = NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)),
                                   keyEquivalent: "q")
         menu.addItem(quitItem)
@@ -98,14 +103,20 @@ final class MenuBarController {
     // MARK: - Actions
 
     @objc private func openMatchManager() {
-        showMatchManager(newMatch: false)
+        showMatchManager(focus: .none)
     }
 
     @objc private func newMatch() {
-        showMatchManager(newMatch: true)
+        showMatchManager(focus: .newMatch)
     }
 
-    private func showMatchManager(newMatch: Bool) {
+    @objc private func openAbout() {
+        showMatchManager(focus: .about)
+    }
+
+    private enum Focus { case none, newMatch, about }
+
+    private func showMatchManager(focus: Focus) {
         if windowController == nil {
             let wc = MatchManagerWindowController(store: store, processManager: processManager)
             // window is guaranteed non-nil: MatchManagerWindowController calls
@@ -125,8 +136,10 @@ final class MenuBarController {
             NSApp.activate(ignoringOtherApps: true)
         }
         windowController?.window?.makeKeyAndOrderFront(nil)
-        if newMatch {
-            windowController?.focusNewMatch()
+        switch focus {
+        case .newMatch: windowController?.focusNewMatch()
+        case .about:    windowController?.focusAbout()
+        case .none:     break
         }
     }
 

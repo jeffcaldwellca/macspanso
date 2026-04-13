@@ -25,6 +25,9 @@ struct MatchManagerView: View {
             selectedMatchID = nil
             isCreatingNew = true
         }
+        .onReceive(NotificationCenter.default.publisher(for: .focusAbout)) { _ in
+            selectedTab = .about
+        }
     }
 
     // MARK: - Tab bar
