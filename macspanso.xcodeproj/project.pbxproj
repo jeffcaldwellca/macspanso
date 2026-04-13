@@ -10,6 +10,7 @@
 		08F6052A816BB9ACCA0C29A1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0E594E96E837F06FCDA74BD /* AppDelegate.swift */; };
 		0F17F80BC41F084C725C8D3C /* EspansoMatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B9CF37AC7F49D20F5E7DFE9 /* EspansoMatch.swift */; };
 		19246F7064B28DCD6C29425B /* MatchManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD5338108243F0B53E1D4DD7 /* MatchManagerView.swift */; };
+		21805B927116698A7059F1F6 /* ExternalEditBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4998035434E6109CE059E65F /* ExternalEditBanner.swift */; };
 		2D5135290BE95A9F7DC59D33 /* EspansoProcessManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F2E60463216EC9368B4ABC6 /* EspansoProcessManager.swift */; };
 		3707A90CFF568DAEDE178BF0 /* YAMLParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB31B0A80C7E4AB1B688D07 /* YAMLParsingTests.swift */; };
 		4A4B9964BA81D2E52E0272CD /* MatchListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0F930F9C211A0971B16A7A /* MatchListView.swift */; };
@@ -49,6 +50,7 @@
 		35DBB64F4559E50573FEBB39 /* macspansoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = macspansoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3BFC9A2FF067F185C8063123 /* MatchFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchFile.swift; sourceTree = "<group>"; };
 		42053EE2AEEB31EC83CE7EAA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		4998035434E6109CE059E65F /* ExternalEditBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalEditBanner.swift; sourceTree = "<group>"; };
 		55A823094350043793627A9A /* YAMLSerializationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YAMLSerializationTests.swift; sourceTree = "<group>"; };
 		6750794A19508E640DB18607 /* MatchManagerWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchManagerWindow.swift; sourceTree = "<group>"; };
 		7D101A2C6D185C3EC5C0BC8D /* macspanso.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = macspanso.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -173,6 +175,7 @@
 		BC414D2111F12D153DCF19E0 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				4998035434E6109CE059E65F /* ExternalEditBanner.swift */,
 				0882C2FC91DCC46DD6BC48EE /* FileTreeView.swift */,
 				CE0F930F9C211A0971B16A7A /* MatchListView.swift */,
 				AD5338108243F0B53E1D4DD7 /* MatchManagerView.swift */,
@@ -274,6 +277,7 @@
 				0F17F80BC41F084C725C8D3C /* EspansoMatch.swift in Sources */,
 				2D5135290BE95A9F7DC59D33 /* EspansoProcessManager.swift in Sources */,
 				60D9D5294EF11BD883A67895 /* EspansoVar.swift in Sources */,
+				21805B927116698A7059F1F6 /* ExternalEditBanner.swift in Sources */,
 				768E48825C5596A69267F879 /* FileTreeView.swift in Sources */,
 				6A5A359E1C1F69C6BBFA28BB /* FileWatcher.swift in Sources */,
 				945285C3E38182EB610CD985 /* FormField.swift in Sources */,
