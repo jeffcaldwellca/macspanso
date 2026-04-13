@@ -113,7 +113,9 @@ final class YAMLParsingTests: XCTestCase {
     }
 
     func testMissingMatchesKey() throws {
-        // Comment-only file — Yams returns nil document, decoder returns []
+        // Comment-only content trims to a non-empty string, Yams parses it as a null
+        // scalar (not a mapping), YAMLDecoder raises typeMismatch with an empty
+        // codingPath, and YAMLSerializer.decode maps that to [].
         let yaml = "# empty file\n"
         let matches = try YAMLSerializer.decode(yaml: yaml)
         XCTAssertEqual(matches.count, 0)
@@ -143,5 +145,30 @@ final class YAMLParsingTests: XCTestCase {
         let matches = try YAMLSerializer.decode(yaml: yaml)
         XCTAssertEqual(matches.count, 1)
         XCTAssertEqual(matches[0].trigger, "::hello")
+    }
+
+    func testEncodeRoundTrip() throws {
+        let original = [
+            EspansoMatch(trigger: "::hi", replace: "Hello"),
+            EspansoMatch(triggers: ["::bye", "::cya"], replace: "Goodbye"),
+        ]
+        let yaml = try YAMLSerializer.encode(original)
+        let decoded = try YAMLSerializer.decode(yaml: yaml)
+        XCTAssertEqual(decoded.count, 2)
+        XCTAssertEqual(decoded[0].trigger, "::hi")
+        XCTAssertEqual(decoded[0].replace, "Hello")
+        XCTAssertEqual(decoded[1].triggers, ["::bye", "::cya"])
+        XCTAssertEqual(decoded[1].replace, "Goodbye")
+    }
+
+    func testTypeMismatchInsideMatchPropagate() {
+        // A mapping where a scalar string is expected for `trigger` should throw,
+        // not be silently swallowed by the top-level typeMismatch catch.
+        let yaml = """
+        matches:
+          - trigger: {bad: value}
+            replace: "test"
+        """
+        XCTAssertThrowsError(try YAMLSerializer.decode(yaml: yaml))
     }
 }
