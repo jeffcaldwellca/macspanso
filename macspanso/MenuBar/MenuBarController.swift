@@ -71,13 +71,11 @@ final class MenuBarController {
 
             menu.addItem(.separator())
 
-            let enableTitle = processManager.state == .disabled ? "Enable Espanso" : "Disable Espanso"
-            let enableItem = NSMenuItem(title: enableTitle,
+            let enableItem = NSMenuItem(title: "Espanso Enabled",
                                         action: #selector(toggleEnabled), keyEquivalent: "")
             enableItem.target = self
-            if processManager.state == .running {
-                enableItem.state = .on
-            }
+            enableItem.state = (processManager.state == .running) ? .on : .off
+            enableItem.isEnabled = (processManager.state == .running || processManager.state == .disabled)
             menu.addItem(enableItem)
 
             let restartItem = NSMenuItem(title: "Restart Espanso",
