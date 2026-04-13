@@ -31,7 +31,6 @@ final class MenuBarController {
     private func configureIcon() {
         if let button = statusItem.button {
             let icon = NSImage(named: "macspanso-sm") ?? NSImage(systemSymbolName: "text.cursor", accessibilityDescription: "macspanso")!
-            icon.isTemplate = true
             icon.size = NSSize(width: 16, height: 16)
             button.image = icon
         }
