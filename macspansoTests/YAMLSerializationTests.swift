@@ -5,14 +5,6 @@ import Foundation
 
 final class YAMLSerializationTests: XCTestCase {
 
-    func testRoundTripSimpleMatch() throws {
-        let original = [EspansoMatch(trigger: "::hello", replace: "Hello!")]
-        let yaml = try YAMLSerializer.encode(original)
-        let decoded = try YAMLSerializer.decode(yaml: yaml)
-        XCTAssertEqual(decoded[0].trigger, original[0].trigger)
-        XCTAssertEqual(decoded[0].replace, original[0].replace)
-    }
-
     func testRoundTripWithDateVar() throws {
         let match = EspansoMatch(
             trigger: "::date",
@@ -21,7 +13,10 @@ final class YAMLSerializationTests: XCTestCase {
         )
         let yaml = try YAMLSerializer.encode([match])
         let decoded = try YAMLSerializer.decode(yaml: yaml)
-        XCTAssertEqual(decoded[0].vars?.first?.params?["format"], .string("%Y-%m-%d"))
+        let v = try XCTUnwrap(decoded.first?.vars?.first)
+        XCTAssertEqual(v.name, "d")
+        XCTAssertEqual(v.type, .date)
+        XCTAssertEqual(v.params?["format"], .string("%Y-%m-%d"))
     }
 
     func testRoundTripFormMatch() throws {
@@ -32,8 +27,10 @@ final class YAMLSerializationTests: XCTestCase {
         )
         let yaml = try YAMLSerializer.encode([match])
         let decoded = try YAMLSerializer.decode(yaml: yaml)
-        XCTAssertEqual(decoded[0].form, "Hi [[name]]")
-        XCTAssertEqual(decoded[0].formFields?["name"]?.default, "World")
+        let result = try XCTUnwrap(decoded.first)
+        XCTAssertEqual(result.trigger, "::greet")
+        XCTAssertEqual(result.form, "Hi [[name]]")
+        XCTAssertEqual(result.formFields?["name"]?.default, "World")
     }
 
     func testUUIDNotSerializedToYAML() throws {
@@ -44,27 +41,34 @@ final class YAMLSerializationTests: XCTestCase {
     }
 
     func testAtomicWriteAndRead() throws {
-        let dir = FileManager.default.temporaryDirectory
-        let url = dir.appendingPathComponent("test-\(UUID().uuidString).yml")
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("test-\(UUID().uuidString).yml")
+        addTeardownBlock { try? FileManager.default.removeItem(at: url) }
+
         let matches = [
             EspansoMatch(trigger: "::a", replace: "Alpha"),
             EspansoMatch(trigger: "::b", replace: "Beta"),
         ]
         try YAMLSerializer.write(matches, to: url)
         XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
+
         let readBack = try YAMLSerializer.decode(contentsOf: url)
         XCTAssertEqual(readBack.count, 2)
-        XCTAssertEqual(readBack[0].trigger, "::a")
-        XCTAssertEqual(readBack[1].replace, "Beta")
-        try FileManager.default.removeItem(at: url)
+        let first = try XCTUnwrap(readBack.first)
+        let second = try XCTUnwrap(readBack.dropFirst().first)
+        XCTAssertEqual(first.trigger, "::a")
+        XCTAssertEqual(first.replace, "Alpha")
+        XCTAssertEqual(second.trigger, "::b")
+        XCTAssertEqual(second.replace, "Beta")
     }
 
     func testWriteCreatesFileWhenAbsent() throws {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("new-\(UUID().uuidString).yml")
+        addTeardownBlock { try? FileManager.default.removeItem(at: url) }
+
         XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))
         try YAMLSerializer.write([EspansoMatch(trigger: "::x", replace: "X")], to: url)
         XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
-        try FileManager.default.removeItem(at: url)
     }
 }
