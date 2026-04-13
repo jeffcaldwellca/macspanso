@@ -9,16 +9,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
-        let matchDir = EspansoProcessManager.resolveMatchDirectory()
-        let store = EspansoConfigStore(matchDirectory: matchDir)
-        let procMgr = EspansoProcessManager()
+        // Resolve the match directory off the main thread (spawns `espanso path`),
+        // then finish setup back on main.
+        Task { @MainActor in
+            let matchDir = await EspansoProcessManager.resolveMatchDirectory()
+            let store = EspansoConfigStore(matchDirectory: matchDir)
+            let procMgr = EspansoProcessManager()
 
-        store.load()
-        procMgr.startPolling()
+            store.load()
+            procMgr.startPolling()
 
-        configStore = store
-        processManager = procMgr
-        menuBarController = MenuBarController(store: store, processManager: procMgr)
+            self.configStore = store
+            self.processManager = procMgr
+            self.menuBarController = MenuBarController(store: store, processManager: procMgr)
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
