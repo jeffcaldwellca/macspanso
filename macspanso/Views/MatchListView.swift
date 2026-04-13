@@ -4,6 +4,7 @@ import SwiftUI
 struct MatchListView: View {
     @ObservedObject var store: EspansoConfigStore
     @Binding var selectedMatchID: UUID?
+    @Binding var isCreatingNew: Bool
     @Binding var showFileTree: Bool
     @Binding var searchText: String
     @State private var deleteError: String?
@@ -51,6 +52,7 @@ struct MatchListView: View {
             HStack(spacing: 4) {
                 Button {
                     selectedMatchID = nil
+                    isCreatingNew = true
                 } label: {
                     Image(systemName: "plus")
                 }

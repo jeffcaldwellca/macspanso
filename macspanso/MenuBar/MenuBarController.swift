@@ -118,12 +118,12 @@ final class MenuBarController {
             )
             windowController = wc
         }
-        windowController?.showWindow(nil)
         if #available(macOS 14.0, *) {
             NSApp.activate()
         } else {
             NSApp.activate(ignoringOtherApps: true)
         }
+        windowController?.window?.makeKeyAndOrderFront(nil)
         if newMatch {
             windowController?.focusNewMatch()
         }

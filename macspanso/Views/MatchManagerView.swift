@@ -7,6 +7,7 @@ struct MatchManagerView: View {
     @ObservedObject var processManager: EspansoProcessManager
 
     @State private var selectedMatchID: UUID? = nil
+    @State private var isCreatingNew: Bool = false
     @State private var showFileTree: Bool = false
     @State private var searchText: String = ""
 
@@ -18,6 +19,7 @@ struct MatchManagerView: View {
                 MatchListView(
                     store: store,
                     selectedMatchID: $selectedMatchID,
+                    isCreatingNew: $isCreatingNew,
                     showFileTree: $showFileTree,
                     searchText: $searchText
                 )
@@ -40,6 +42,7 @@ struct MatchManagerView: View {
         .animation(.easeInOut(duration: 0.2), value: store.externallyChangedURL != nil)
         .onReceive(NotificationCenter.default.publisher(for: .focusNewMatch)) { _ in
             selectedMatchID = nil
+            isCreatingNew = true
         }
     }
 
@@ -55,16 +58,23 @@ struct MatchManagerView: View {
                 onSave: { selectedMatchID = $0.id },
                 onCancel: {}
             )
-        } else {
-            // Empty state / new match form
+        } else if isCreatingNew {
             MatchEditorForm(
                 match: EspansoMatch(),
                 sourceFile: nil,
                 store: store,
-                onSave: { selectedMatchID = $0.id },
-                onCancel: { selectedMatchID = nil }
+                onSave: { selectedMatchID = $0.id; isCreatingNew = false },
+                onCancel: { isCreatingNew = false }
             )
             .id("new")  // force re-init when triggered from menu bar
+        } else {
+            // Empty state — nothing selected
+            VStack {
+                Spacer()
+                Text("Select a match or press + to create one")
+                    .foregroundStyle(.tertiary)
+                Spacer()
+            }
         }
     }
 }
