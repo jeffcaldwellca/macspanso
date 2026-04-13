@@ -3,6 +3,9 @@ import Foundation
 
 /// Watches a directory (and individual files) for changes using DispatchSource.
 /// Fires `onChange(url)` on the main queue when a watched path is modified.
+///
+/// Threading: all mutations to this object must occur on the main thread.
+/// `EspansoConfigStore` is `@MainActor`, so this invariant is enforced by its callers.
 final class FileWatcher {
     var onChange: ((URL) -> Void)?
 

@@ -13,6 +13,9 @@ final class EspansoConfigStore: ObservableObject {
     private let matchDirectory: URL
     private let watcher = FileWatcher()
 
+    /// Paths currently being written by this store; FSEvents for these are suppressed.
+    private var writingPaths: Set<String> = []
+
     /// All non-package matches, flattened across all files.
     var allMatches: [EspansoMatch] {
         matchFiles.filter { !$0.isPackage }.flatMap { $0.matches }
@@ -28,9 +31,9 @@ final class EspansoConfigStore: ObservableObject {
     // MARK: - Load
 
     func load() {
+        watcher.stopAll()   // clear stale watches if load() is called more than once
         let urls = scanMatchDirectory()
         matchFiles = urls.map { loadFile(at: $0) }
-        // Watch the directory and each file
         watcher.watch(url: matchDirectory)
         matchFiles.forEach { watcher.watch(url: $0.url) }
     }
@@ -48,7 +51,9 @@ final class EspansoConfigStore: ObservableObject {
     }
 
     private func loadFile(at url: URL) -> MatchFile {
-        let isPackage = url.path.contains("/packages/")
+        // Anchor package detection to the known config root rather than global path search.
+        let relative = url.path.replacingOccurrences(of: matchDirectory.path, with: "")
+        let isPackage = relative.hasPrefix("/packages/")
         do {
             let matches = try YAMLSerializer.decode(contentsOf: url)
             return MatchFile(url: url, matches: matches, isPackage: isPackage)
@@ -60,10 +65,24 @@ final class EspansoConfigStore: ObservableObject {
 
     // MARK: - Write
 
+    /// Registers a write-in-progress for `url` so that the resulting FSEvent is
+    /// not mistaken for an external edit. Clears after a short delay to account
+    /// for async FSEvent delivery.
+    private func suppressingWatcherEvents(for url: URL, _ body: () throws -> Void) rethrows {
+        writingPaths.insert(url.path)
+        try body()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.writingPaths.remove(url.path)
+        }
+    }
+
     /// Save a mutated match list back to the file that owns it.
     func save(matches: [EspansoMatch], in fileID: UUID) throws {
         guard let index = matchFiles.firstIndex(where: { $0.id == fileID }) else { return }
-        try YAMLSerializer.write(matches, to: matchFiles[index].url)
+        let url = matchFiles[index].url
+        try suppressingWatcherEvents(for: url) {
+            try YAMLSerializer.write(matches, to: url)
+        }
         matchFiles[index].matches = matches
     }
 
@@ -72,7 +91,11 @@ final class EspansoConfigStore: ObservableObject {
         for i in matchFiles.indices {
             if let j = matchFiles[i].matches.firstIndex(where: { $0.id == match.id }) {
                 matchFiles[i].matches[j] = match
-                try YAMLSerializer.write(matchFiles[i].matches, to: matchFiles[i].url)
+                let url = matchFiles[i].url
+                let updatedMatches = matchFiles[i].matches
+                try suppressingWatcherEvents(for: url) {
+                    try YAMLSerializer.write(updatedMatches, to: url)
+                }
                 return
             }
         }
@@ -83,10 +106,15 @@ final class EspansoConfigStore: ObservableObject {
         let baseURL = matchDirectory.appendingPathComponent("base.yml")
         if let index = matchFiles.firstIndex(where: { $0.url == baseURL }) {
             matchFiles[index].matches.append(match)
-            try YAMLSerializer.write(matchFiles[index].matches, to: baseURL)
+            let updatedMatches = matchFiles[index].matches
+            try suppressingWatcherEvents(for: baseURL) {
+                try YAMLSerializer.write(updatedMatches, to: baseURL)
+            }
         } else {
             // base.yml doesn't exist yet — create it
-            try YAMLSerializer.write([match], to: baseURL)
+            try suppressingWatcherEvents(for: baseURL) {
+                try YAMLSerializer.write([match], to: baseURL)
+            }
             let newFile = MatchFile(url: baseURL, matches: [match], isPackage: false)
             matchFiles.insert(newFile, at: 0)
             watcher.watch(url: baseURL)
@@ -98,7 +126,11 @@ final class EspansoConfigStore: ObservableObject {
         for i in matchFiles.indices {
             if let j = matchFiles[i].matches.firstIndex(where: { $0.id == matchID }) {
                 matchFiles[i].matches.remove(at: j)
-                try YAMLSerializer.write(matchFiles[i].matches, to: matchFiles[i].url)
+                let url = matchFiles[i].url
+                let updatedMatches = matchFiles[i].matches
+                try suppressingWatcherEvents(for: url) {
+                    try YAMLSerializer.write(updatedMatches, to: url)
+                }
                 return
             }
         }
@@ -112,6 +144,7 @@ final class EspansoConfigStore: ObservableObject {
     // MARK: - External Change Handling
 
     private func handleExternalChange(at url: URL) {
+        guard !writingPaths.contains(url.path) else { return }
         externallyChangedURL = url
     }
 
