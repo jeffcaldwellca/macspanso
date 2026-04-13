@@ -29,11 +29,12 @@ targets:
         CFBundleDisplayName: macspanso
         CFBundleShortVersionString: "1.0.0"
         CFBundleVersion: "1"
-        NSHumanReadableCopyright: ""
+        NSHumanReadableCopyright: "Copyright © 2026 Macspanso"
     dependencies:
       - package: Yams
     settings:
       base:
+        DEVELOPMENT_TEAM: 88ZPCYS252
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "-"
   macspansoTests:

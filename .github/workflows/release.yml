@@ -1,0 +1,153 @@
+name: Release
+
+# Triggers on version tags: git tag v1.0.0 && git push origin v1.0.0
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Build, Sign, Notarize & Release
+    runs-on: macos-15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Tooling ────────────────────────────────────────────────────────────
+
+      - name: Install tools
+        run: brew install xcodegen create-dmg
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      # ── Code signing ───────────────────────────────────────────────────────
+      # Required secrets: MACOS_CERTIFICATE (base64 .p12), MACOS_CERTIFICATE_PASSWORD, KEYCHAIN_PASSWORD
+
+      - name: Import Developer ID certificate
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          echo "$MACOS_CERTIFICATE" | base64 --decode > certificate.p12
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -lut 21600 build.keychain
+
+          security import certificate.p12 \
+            -k build.keychain \
+            -P "$MACOS_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign
+
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" build.keychain
+
+          rm certificate.p12
+
+      # ── Version ────────────────────────────────────────────────────────────
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "DMG=macspanso-$VERSION.dmg" >> "$GITHUB_OUTPUT"
+
+      # ── Archive & export ───────────────────────────────────────────────────
+
+      - name: Archive
+        run: |
+          xcodebuild archive \
+            -scheme macspanso \
+            -configuration Release \
+            -archivePath build/macspanso.xcarchive \
+            DEVELOPMENT_TEAM=88ZPCYS252 \
+            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_IDENTITY="Developer ID Application"
+
+      - name: Export signed .app
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath build/macspanso.xcarchive \
+            -exportPath build/export \
+            -exportOptionsPlist ExportOptions.plist
+
+      # ── Package ────────────────────────────────────────────────────────────
+
+      - name: Create DMG
+        env:
+          DMG: ${{ steps.version.outputs.DMG }}
+        run: |
+          create-dmg \
+            --volname "macspanso" \
+            --window-size 540 380 \
+            --app-drop-link 380 160 \
+            "build/$DMG" \
+            "build/export/macspanso.app"
+
+      # ── Notarize & staple ──────────────────────────────────────────────────
+      # Required secrets: NOTARIZATION_APPLE_ID, NOTARIZATION_PASSWORD (app-specific)
+
+      - name: Notarize DMG
+        env:
+          NOTARIZATION_APPLE_ID: ${{ secrets.NOTARIZATION_APPLE_ID }}
+          NOTARIZATION_PASSWORD: ${{ secrets.NOTARIZATION_PASSWORD }}
+          DMG: ${{ steps.version.outputs.DMG }}
+        run: |
+          xcrun notarytool submit "build/$DMG" \
+            --apple-id "$NOTARIZATION_APPLE_ID" \
+            --team-id "88ZPCYS252" \
+            --password "$NOTARIZATION_PASSWORD" \
+            --wait
+
+      - name: Staple notarization ticket
+        env:
+          DMG: ${{ steps.version.outputs.DMG }}
+        run: xcrun stapler staple "build/$DMG"
+
+      # ── Compute SHA256 ─────────────────────────────────────────────────────
+
+      - name: Compute SHA256
+        id: sha
+        env:
+          DMG: ${{ steps.version.outputs.DMG }}
+        run: |
+          SHA=$(shasum -a 256 "build/$DMG" | awk '{print $1}')
+          echo "SHA256=$SHA" >> "$GITHUB_OUTPUT"
+
+      # ── GitHub Release ─────────────────────────────────────────────────────
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/${{ steps.version.outputs.DMG }}
+          generate_release_notes: true
+
+      # ── Update Homebrew tap ────────────────────────────────────────────────
+      # Required secret: TAP_TOKEN — GitHub PAT with repo scope for jeffcaldwellca/homebrew-tap
+
+      - name: Update Homebrew tap
+        env:
+          TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
+          VERSION: ${{ steps.version.outputs.VERSION }}
+          SHA256: ${{ steps.sha.outputs.SHA256 }}
+        run: |
+          git clone \
+            "https://x-access-token:$TAP_TOKEN@github.com/jeffcaldwellca/homebrew-tap.git" \
+            tap
+
+          cd tap
+
+          sed -i '' "s/version \".*\"/version \"$VERSION\"/" Casks/macspanso.rb
+          sed -i '' "s/sha256 \".*\"/sha256 \"$SHA256\"/" Casks/macspanso.rb
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/macspanso.rb
+          git commit -m "macspanso $VERSION"
+          git push

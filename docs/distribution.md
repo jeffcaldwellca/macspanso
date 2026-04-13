@@ -20,7 +20,7 @@ Update `project.yml` with your real team ID before archiving:
 settings:
   base:
     CODE_SIGN_STYLE: Automatic
-    DEVELOPMENT_TEAM: YOUR_TEAM_ID   # from developer.apple.com
+    DEVELOPMENT_TEAM: 88ZPCYS252   # from developer.apple.com
     CODE_SIGN_IDENTITY: "Developer ID Application"
 ```
 
@@ -53,7 +53,7 @@ xcodebuild -exportArchive \
     <key>method</key>
     <string>developer-id</string>
     <key>teamID</key>
-    <string>YOUR_TEAM_ID</string>
+    <string>88ZPCYS252</string>
 </dict>
 </plist>
 ```
@@ -80,8 +80,8 @@ Create an app-specific password at [appleid.apple.com](https://appleid.apple.com
 ```bash
 # Submit for notarization (--wait blocks until Apple responds)
 xcrun notarytool submit build/macspanso-1.0.0.dmg \
-  --apple-id you@example.com \
-  --team-id YOUR_TEAM_ID \
+  --apple-id your-apple-id@example.com \
+  --team-id 88ZPCYS252 \
   --password YOUR_APP_SPECIFIC_PASSWORD \
   --wait
 
@@ -102,7 +102,7 @@ shasum -a 256 build/macspanso-1.0.0.dmg
 
 The download URL will be:
 ```
-https://github.com/YOURNAME/macspanso/releases/download/v1.0.0/macspanso-1.0.0.dmg
+https://github.com/jeffcaldwellca/macspanso/releases/download/v1.0.0/macspanso-1.0.0.dmg
 ```
 
 ---
@@ -116,10 +116,10 @@ cask "macspanso" do
   version "1.0.0"
   sha256 "paste_shasum_output_here"
 
-  url "https://github.com/YOURNAME/macspanso/releases/download/v#{version}/macspanso-#{version}.dmg"
+  url "https://github.com/jeffcaldwellca/macspanso/releases/download/v#{version}/macspanso-#{version}.dmg"
   name "macspanso"
   desc "macOS GUI for the espanso text expander"
-  homepage "https://github.com/YOURNAME/macspanso"
+  homepage "https://github.com/jeffcaldwellca/macspanso"
 
   depends_on cask: "espanso"   # installs espanso automatically if not present
 
@@ -139,7 +139,7 @@ The `depends_on cask: "espanso"` line means Homebrew will install espanso before
 
 ```bash
 # First install
-brew install --cask YOURNAME/tap/macspanso
+brew install --cask jeffcaldwellca/tap/macspanso
 
 # Upgrade to a new version
 brew upgrade --cask macspanso

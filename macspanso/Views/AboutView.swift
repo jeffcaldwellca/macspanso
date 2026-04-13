@@ -85,7 +85,7 @@ struct AboutView: View {
             LinkButton(
                 label: "GitHub",
                 systemImage: "arrow.up.right.square",
-                url: URL(string: "https://github.com/jeffcaldwell/macspanso")!
+                url: URL(string: "https://github.com/jeffcaldwellca/macspanso")!
             )
             LinkButton(
                 label: "espanso.org",

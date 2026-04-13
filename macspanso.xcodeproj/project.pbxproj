@@ -262,6 +262,7 @@
 						ProvisioningStyle = Manual;
 					};
 					E609A0361684D80F77269BBE = {
+						DevelopmentTeam = 88ZPCYS252;
 						ProvisioningStyle = Manual;
 					};
 				};
@@ -377,6 +378,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 88ZPCYS252;
 				INFOPLIST_FILE = macspanso/App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -394,6 +396,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 88ZPCYS252;
 				INFOPLIST_FILE = macspanso/App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

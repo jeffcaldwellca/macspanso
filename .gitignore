@@ -1,1 +1,38 @@
 .superpowers/
+
+# Xcode build artifacts
+build/
+DerivedData/
+*.xcarchive
+
+# Xcode user state (per-developer, not shared)
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcworkspace/contents.xcworkspacedata
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+*.xccheckout
+*.xcuserstate
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Credentials — never commit these
+*.p12
+*.mobileprovision
+certificate.p12
+
+# Editor swap files
+*.swp
+*.swo

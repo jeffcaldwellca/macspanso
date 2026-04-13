@@ -32,10 +32,10 @@ espanso is a powerful cross-platform text expander, but its configuration lives 
 ### Homebrew (recommended)
 
 ```bash
-brew install --cask YOURNAME/tap/macspanso
+brew install --cask jeffcaldwellca/tap/macspanso
 ```
 
-See [docs/distribution.md](docs/distribution.md) for how to set up the tap and how Homebrew automatically installs espanso as a dependency.
+See [docs/distribution.md](docs/distribution.md) for tap setup. Homebrew automatically installs espanso as a dependency if it isn't already present.
 
 ### Direct download
 
@@ -48,7 +48,7 @@ Download the latest `.dmg` from the [Releases](../../releases) page, open it, an
 **Prerequisites:** Xcode 15+, [XcodeGen](https://github.com/yonaskolb/XcodeGen)
 
 ```bash
-git clone https://github.com/YOURNAME/macspanso.git
+git clone https://github.com/jeffcaldwellca/macspanso.git
 cd macspanso
 xcodegen generate
 open macspanso.xcodeproj
