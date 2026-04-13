@@ -9,7 +9,7 @@ struct ExternalEditBanner: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "arrow.triangle.2.circlepath")
-                .foregroundColor(.blue)
+                .foregroundStyle(Color.accentColor)
             Text("\(filename) changed externally")
                 .font(.callout)
             Spacer()

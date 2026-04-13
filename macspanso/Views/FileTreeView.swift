@@ -6,13 +6,16 @@ struct FileTreeView: View {
     @Binding var selectedMatchID: UUID?
 
     var body: some View {
-        List(store.matchFiles, id: \.id) { file in
+        // Use List(selection:) so rows highlight correctly on macOS.
+        // Package matches get no .tag, preventing them from being selected
+        // (allMatches excludes package files, so the editor panel can't display them).
+        List(store.matchFiles, id: \.id, selection: $selectedMatchID) { file in
             Section {
                 ForEach(file.matches, id: \.id) { match in
                     MatchRowView(match: match)
-                        .tag(match.id)
-                        .onTapGesture { selectedMatchID = match.id }
                         .foregroundStyle(file.isPackage ? .secondary : .primary)
+                        // Only non-package matches get a selection tag
+                        .ifLet(!file.isPackage) { $0.tag(match.id) }
                 }
                 if file.matches.isEmpty && file.parseError == nil {
                     Text("No matches")
@@ -49,5 +52,15 @@ struct FileTreeView: View {
             }
         }
         .listStyle(.sidebar)
+    }
+}
+
+// MARK: - View helper
+
+private extension View {
+    /// Conditionally applies a modifier. Used to apply .tag only when the condition is true.
+    @ViewBuilder
+    func ifLet(_ condition: Bool, transform: (Self) -> some View) -> some View {
+        if condition { transform(self) } else { self }
     }
 }

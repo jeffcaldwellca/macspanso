@@ -6,6 +6,7 @@ struct MatchListView: View {
     @Binding var selectedMatchID: UUID?
     @Binding var showFileTree: Bool
     @Binding var searchText: String
+    @State private var deleteError: String?
 
     private var filteredMatches: [EspansoMatch] {
         guard !searchText.isEmpty else { return store.allMatches }
@@ -58,14 +59,26 @@ struct MatchListView: View {
 
                 Button {
                     guard let id = selectedMatchID else { return }
-                    try? store.delete(matchID: id)
-                    selectedMatchID = nil
+                    do {
+                        try store.delete(matchID: id)
+                        selectedMatchID = nil
+                    } catch {
+                        deleteError = error.localizedDescription
+                    }
                 } label: {
                     Image(systemName: "minus")
                 }
                 .buttonStyle(.plain)
                 .help("Delete selected match")
                 .disabled(selectedMatchID == nil)
+                .alert("Delete Failed", isPresented: Binding(
+                    get: { deleteError != nil },
+                    set: { if !$0 { deleteError = nil } }
+                )) {
+                    Button("OK") { deleteError = nil }
+                } message: {
+                    Text(deleteError ?? "")
+                }
 
                 Spacer()
 
@@ -87,7 +100,6 @@ struct MatchListView: View {
     private var flatList: some View {
         List(filteredMatches, id: \.id, selection: $selectedMatchID) { match in
             MatchRowView(match: match)
-                .tag(match.id)
         }
         .listStyle(.sidebar)
     }
