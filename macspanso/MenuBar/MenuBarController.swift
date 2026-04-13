@@ -2,6 +2,7 @@
 // Stub — full implementation in Task 7
 import AppKit
 
+@MainActor
 final class MenuBarController {
-    init() {}
+    init(store: EspansoConfigStore, processManager: EspansoProcessManager) {}
 }
