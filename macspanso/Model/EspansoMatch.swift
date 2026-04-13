@@ -46,7 +46,7 @@ public struct EspansoMatch: Identifiable, Codable, Equatable {
     }
 
     // id is internal — exclude from YAML encode/decode
-    enum CodingKeys: String, CodingKey {
+    private enum CodingKeys: String, CodingKey {
         case trigger, triggers, regex, replace, form, vars, label, word
         case formFields    = "form_fields"
         case propagateCase = "propagate_case"

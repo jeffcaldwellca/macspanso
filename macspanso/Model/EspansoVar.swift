@@ -11,7 +11,9 @@ public enum YAMLValue: Codable, Equatable {
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.singleValueContainer()
-        // Order matters: bool before int (Swift decodes 0/1 as bool from YAML)
+        // Order matters: bool before int — Yams-specific: YAML's core schema treats
+        // true/false as booleans. This order is correct for Yams but would break with
+        // JSONDecoder (which doesn't conflate 0/false). Do not use YAMLValue with JSONDecoder.
         if let v = try? c.decode(Bool.self)     { self = .bool(v);   return }
         if let v = try? c.decode(Int.self)      { self = .int(v);    return }
         if let v = try? c.decode(String.self)   { self = .string(v); return }
