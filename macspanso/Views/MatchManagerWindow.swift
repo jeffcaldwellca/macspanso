@@ -11,13 +11,13 @@ final class MatchManagerWindowController: NSWindowController {
         self.processManager = processManager
 
         let panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 800, height: 560),
+            contentRect: NSRect(x: 0, y: 0, width: 860, height: 640),
             styleMask: [.titled, .closable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
         panel.title = "macspanso"
-        panel.minSize = NSSize(width: 600, height: 400)
+        panel.minSize = NSSize(width: 640, height: 520)
         panel.center()
         panel.isReleasedWhenClosed = false
 
@@ -33,8 +33,12 @@ final class MatchManagerWindowController: NSWindowController {
     required init?(coder: NSCoder) { fatalError("not used") }
 
     func focusNewMatch() {
-        // Post a notification that MatchManagerView listens to
-        NotificationCenter.default.post(name: .focusNewMatch, object: nil)
+        // Delay by one run-loop cycle so SwiftUI has time to render MatchManagerView
+        // and set up its .onReceive subscriber before the notification fires.
+        // Without this, the notification fires into the void on first window open.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            NotificationCenter.default.post(name: .focusNewMatch, object: nil)
+        }
     }
 }
 
