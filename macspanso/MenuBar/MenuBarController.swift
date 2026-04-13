@@ -10,6 +10,8 @@ final class MenuBarController {
     private var cancellables = Set<AnyCancellable>()
     private var windowController: MatchManagerWindowController?
 
+    private static let espansoURL = URL(string: "https://espanso.org")!
+
     init(store: EspansoConfigStore, processManager: EspansoProcessManager) {
         self.store = store
         self.processManager = processManager
@@ -18,8 +20,9 @@ final class MenuBarController {
         configureIcon()
         buildMenu()
 
-        // Rebuild menu whenever daemon state changes
+        // Rebuild menu only when the daemon state actually changes.
         processManager.$state
+            .removeDuplicates()
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.buildMenu() }
             .store(in: &cancellables)
@@ -39,11 +42,11 @@ final class MenuBarController {
         let headerItem = NSMenuItem(title: "macspanso", action: nil, keyEquivalent: "")
         headerItem.isEnabled = false
         switch processManager.state {
-        case .running:  headerItem.title = "macspanso  ● Running"
-        case .disabled: headerItem.title = "macspanso  ○ Disabled"
-        case .stopped:  headerItem.title = "macspanso  ✕ Stopped"
+        case .running:      headerItem.title = "macspanso  ● Running"
+        case .disabled:     headerItem.title = "macspanso  ○ Disabled"
+        case .stopped:      headerItem.title = "macspanso  ✕ Stopped"
         case .notInstalled: headerItem.title = "macspanso  ⚠ Not Installed"
-        case .unknown:  headerItem.title = "macspanso"
+        case .unknown:      headerItem.title = "macspanso"
         }
         menu.addItem(headerItem)
         menu.addItem(.separator())
@@ -56,11 +59,13 @@ final class MenuBarController {
         } else {
             let openItem = NSMenuItem(title: "Open Match Manager…",
                                       action: #selector(openMatchManager), keyEquivalent: "m")
+            openItem.keyEquivalentModifierMask = [.command]
             openItem.target = self
             menu.addItem(openItem)
 
             let newItem = NSMenuItem(title: "New Match…",
                                      action: #selector(newMatch), keyEquivalent: "n")
+            newItem.keyEquivalentModifierMask = [.command]
             newItem.target = self
             menu.addItem(newItem)
 
@@ -101,16 +106,31 @@ final class MenuBarController {
 
     private func showMatchManager(newMatch: Bool) {
         if windowController == nil {
-            windowController = MatchManagerWindowController(
-                store: store,
-                processManager: processManager
-            )
+            let wc = MatchManagerWindowController(store: store, processManager: processManager)
+            // Nil our reference when the window closes so it can be deallocated.
+            if let window = wc.window {
+                NotificationCenter.default.addObserver(
+                    self,
+                    selector: #selector(windowDidClose(_:)),
+                    name: NSWindow.willCloseNotification,
+                    object: window
+                )
+            }
+            windowController = wc
         }
         windowController?.showWindow(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        if #available(macOS 14.0, *) {
+            NSApp.activate()
+        } else {
+            NSApp.activate(ignoringOtherApps: true)
+        }
         if newMatch {
             windowController?.focusNewMatch()
         }
+    }
+
+    @objc private func windowDidClose(_ note: Notification) {
+        windowController = nil
     }
 
     @objc private func toggleEnabled() {
@@ -122,6 +142,6 @@ final class MenuBarController {
     }
 
     @objc private func openEspansoSite() {
-        NSWorkspace.shared.open(URL(string: "https://espanso.org")!)
+        NSWorkspace.shared.open(Self.espansoURL)
     }
 }
