@@ -14,12 +14,12 @@
 		2D5135290BE95A9F7DC59D33 /* EspansoProcessManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F2E60463216EC9368B4ABC6 /* EspansoProcessManager.swift */; };
 		3707A90CFF568DAEDE178BF0 /* YAMLParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB31B0A80C7E4AB1B688D07 /* YAMLParsingTests.swift */; };
 		4A4B9964BA81D2E52E0272CD /* MatchListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0F930F9C211A0971B16A7A /* MatchListView.swift */; };
-		512F000E089EBE49F2C7DD0F /* macspanso-sm.png in Resources */ = {isa = PBXBuildFile; fileRef = 567EE23BCA5B2547C8AD5CCB /* macspanso-sm.png */; };
 		60D9D5294EF11BD883A67895 /* EspansoVar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BA30315FCC8E232EF0619A7 /* EspansoVar.swift */; };
 		674DE122D0A6EEB69B24E606 /* YAMLSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5052F737DE80E9307D1A5CD /* YAMLSerializer.swift */; };
 		6A5A359E1C1F69C6BBFA28BB /* FileWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FB8530FDA5F7A4FF993B443 /* FileWatcher.swift */; };
 		768E48825C5596A69267F879 /* FileTreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0882C2FC91DCC46DD6BC48EE /* FileTreeView.swift */; };
 		7DBA6F75EEA2397E14800BA1 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D9311AD3CA4F25DF3E49BF7 /* MenuBarController.swift */; };
+		8088A487EDAFF5DEF6CD69E5 /* logo-sm.png in Resources */ = {isa = PBXBuildFile; fileRef = 48296F73242EFFBEAF516FEC /* logo-sm.png */; };
 		81D985B3200D4ED0CD6F10E5 /* MatchValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 197269D9A01D91DFA8FDD98B /* MatchValidationTests.swift */; };
 		83CE32541305E31383616EE5 /* VariableBuilderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9139A78FA597BE9FF574C077 /* VariableBuilderView.swift */; };
 		8ECA817CBF7170DADD934DDA /* Yams in Frameworks */ = {isa = PBXBuildFile; productRef = 5FB62BECB934B23CAC5FA023 /* Yams */; };
@@ -56,9 +56,9 @@
 		35DBB64F4559E50573FEBB39 /* macspansoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = macspansoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3BFC9A2FF067F185C8063123 /* MatchFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchFile.swift; sourceTree = "<group>"; };
 		42053EE2AEEB31EC83CE7EAA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		48296F73242EFFBEAF516FEC /* logo-sm.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "logo-sm.png"; sourceTree = "<group>"; };
 		4998035434E6109CE059E65F /* ExternalEditBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalEditBanner.swift; sourceTree = "<group>"; };
 		55A823094350043793627A9A /* YAMLSerializationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YAMLSerializationTests.swift; sourceTree = "<group>"; };
-		567EE23BCA5B2547C8AD5CCB /* macspanso-sm.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "macspanso-sm.png"; sourceTree = "<group>"; };
 		6750794A19508E640DB18607 /* MatchManagerWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchManagerWindow.swift; sourceTree = "<group>"; };
 		7D101A2C6D185C3EC5C0BC8D /* macspanso.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = macspanso.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7D7EBB169B203D1E23937442 /* ViewStubs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewStubs.swift; sourceTree = "<group>"; };
@@ -98,7 +98,7 @@
 		20A5532ABD2B84F1EC62FCA2 /* macspanso */ = {
 			isa = PBXGroup;
 			children = (
-				567EE23BCA5B2547C8AD5CCB /* macspanso-sm.png */,
+				48296F73242EFFBEAF516FEC /* logo-sm.png */,
 				A812FE7A84709891EDC1F593 /* App */,
 				52AF2A16F3FB15621CC5C266 /* MenuBar */,
 				43B251CB6867BA66152BAE40 /* Model */,
@@ -288,7 +288,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				512F000E089EBE49F2C7DD0F /* macspanso-sm.png in Resources */,
+				8088A487EDAFF5DEF6CD69E5 /* logo-sm.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
