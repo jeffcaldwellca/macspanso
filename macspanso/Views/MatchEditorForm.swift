@@ -10,6 +10,7 @@ struct MatchEditorForm: View {
 
     @State private var draft: EspansoMatch
     @State private var useRegex: Bool
+    @State private var isFormMatch: Bool
     @State private var validationErrors: [ValidationError] = []
     @State private var saveError: String? = nil
     @State private var showUnsavedAlert: Bool = false
@@ -30,6 +31,7 @@ struct MatchEditorForm: View {
         self.onCancel = onCancel
         _draft = State(initialValue: match)
         _useRegex = State(initialValue: match.regex != nil)
+        _isFormMatch = State(initialValue: match.form != nil)
         _triggerEntryIDs = State(initialValue: (match.triggers ?? []).map { _ in UUID() })
     }
 
@@ -62,7 +64,9 @@ struct MatchEditorForm: View {
                 VStack(alignment: .leading, spacing: 20) {
                     triggerSection
                     replacementSection
-                    VariableBuilderView(vars: $draft.vars)
+                    if !isFormMatch {
+                        VariableBuilderView(vars: $draft.vars)
+                    }
                     optionsSection
                 }
                 .padding(20)
@@ -202,28 +206,56 @@ struct MatchEditorForm: View {
 
     private var replacementSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label("Replacement", systemImage: "text.alignleft")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundStyle(.secondary)
-                .textCase(.uppercase)
-
-            TextEditor(text: Binding(
-                get: { draft.replace ?? draft.form ?? "" },
-                set: { v in
-                    let value = v.isEmpty ? nil : v
-                    if draft.form != nil { draft.form = value } else { draft.replace = value }
-                }
-            ))
-            .font(.system(.body, design: .monospaced))
-            .frame(minHeight: 80)
-            .overlay(RoundedRectangle(cornerRadius: 5).stroke(.separator))
-
-            // Unresolved var reference errors
-            ForEach(unresolvedVarErrors, id: \.self) { varName in
-                Label("{{\(varName)}} is not declared as a variable", systemImage: "exclamationmark.triangle")
+            HStack {
+                Label("Replacement", systemImage: "text.alignleft")
                     .font(.caption)
-                    .foregroundStyle(.orange)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+                Spacer()
+                Picker("", selection: $isFormMatch) {
+                    Text("Text").tag(false)
+                    Text("Form").tag(true)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 140)
+                .onChange(of: isFormMatch) { wantsForm in
+                    if wantsForm {
+                        draft.form = draft.replace ?? ""
+                        draft.replace = nil
+                    } else {
+                        draft.replace = draft.form ?? ""
+                        draft.form = nil
+                        draft.formFields = nil
+                    }
+                }
+            }
+
+            if isFormMatch {
+                FormFieldsSection(
+                    formTemplate: Binding(
+                        get: { draft.form ?? "" },
+                        set: { draft.form = $0.isEmpty ? nil : $0 }
+                    ),
+                    formFields: Binding(
+                        get: { draft.formFields ?? [:] },
+                        set: { draft.formFields = $0.isEmpty ? nil : $0 }
+                    )
+                )
+            } else {
+                TextEditor(text: Binding(
+                    get: { draft.replace ?? "" },
+                    set: { draft.replace = $0.isEmpty ? nil : $0 }
+                ))
+                .font(.system(.body, design: .monospaced))
+                .frame(minHeight: 80)
+                .overlay(RoundedRectangle(cornerRadius: 5).stroke(.separator))
+
+                ForEach(unresolvedVarErrors, id: \.self) { varName in
+                    Label("{{\(varName)}} is not declared as a variable", systemImage: "exclamationmark.triangle")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
             }
         }
     }
@@ -268,10 +300,15 @@ struct MatchEditorForm: View {
     }
 
     private func revalidate() {
-        validationErrors = MatchValidator.validate(
+        var errors = MatchValidator.validate(
             draft,
             existingMatches: store.allMatches.filter { $0.id != draft.id }
         )
+        // In form mode, {{name}} placeholders refer to form fields, not vars — suppress false positives.
+        if isFormMatch {
+            errors = errors.filter { if case .unresolvedVarReference = $0 { return false }; return true }
+        }
+        validationErrors = errors
     }
 
     @ViewBuilder
