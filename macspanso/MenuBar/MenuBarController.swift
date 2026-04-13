@@ -30,24 +30,27 @@ final class MenuBarController {
 
     private func configureIcon() {
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: "text.cursor", accessibilityDescription: "macspanso")
-            button.image?.isTemplate = true
+            let icon = NSImage(named: "macspanso-sm") ?? NSImage(systemSymbolName: "text.cursor", accessibilityDescription: "macspanso")!
+            icon.isTemplate = true
+            icon.size = NSSize(width: 16, height: 16)
+            button.image = icon
         }
     }
 
     private func buildMenu() {
         let menu = NSMenu()
 
-        // Header item (not clickable)
-        let headerItem = NSMenuItem(title: "macspanso", action: nil, keyEquivalent: "")
-        headerItem.isEnabled = false
+        // Header item — shows espanso's status, not macspanso's running state
+        let headerTitle: String
         switch processManager.state {
-        case .running:      headerItem.title = "macspanso  ● Running"
-        case .disabled:     headerItem.title = "macspanso  ○ Disabled"
-        case .stopped:      headerItem.title = "macspanso  ✕ Stopped"
-        case .notInstalled: headerItem.title = "macspanso  ⚠ Not Installed"
-        case .unknown:      headerItem.title = "macspanso"
+        case .running:      headerTitle = "● Espanso enabled"
+        case .disabled:     headerTitle = "○ Espanso disabled"
+        case .stopped:      headerTitle = "✕ Espanso stopped"
+        case .notInstalled: headerTitle = "⚠ Espanso not installed"
+        case .unknown:      headerTitle = "Espanso"
         }
+        let headerItem = NSMenuItem(title: headerTitle, action: nil, keyEquivalent: "")
+        headerItem.isEnabled = false
         menu.addItem(headerItem)
         menu.addItem(.separator())
 

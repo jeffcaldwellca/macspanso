@@ -14,6 +14,7 @@
 		2D5135290BE95A9F7DC59D33 /* EspansoProcessManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F2E60463216EC9368B4ABC6 /* EspansoProcessManager.swift */; };
 		3707A90CFF568DAEDE178BF0 /* YAMLParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB31B0A80C7E4AB1B688D07 /* YAMLParsingTests.swift */; };
 		4A4B9964BA81D2E52E0272CD /* MatchListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0F930F9C211A0971B16A7A /* MatchListView.swift */; };
+		512F000E089EBE49F2C7DD0F /* macspanso-sm.png in Resources */ = {isa = PBXBuildFile; fileRef = 567EE23BCA5B2547C8AD5CCB /* macspanso-sm.png */; };
 		60D9D5294EF11BD883A67895 /* EspansoVar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BA30315FCC8E232EF0619A7 /* EspansoVar.swift */; };
 		674DE122D0A6EEB69B24E606 /* YAMLSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5052F737DE80E9307D1A5CD /* YAMLSerializer.swift */; };
 		6A5A359E1C1F69C6BBFA28BB /* FileWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FB8530FDA5F7A4FF993B443 /* FileWatcher.swift */; };
@@ -57,6 +58,7 @@
 		42053EE2AEEB31EC83CE7EAA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		4998035434E6109CE059E65F /* ExternalEditBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalEditBanner.swift; sourceTree = "<group>"; };
 		55A823094350043793627A9A /* YAMLSerializationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YAMLSerializationTests.swift; sourceTree = "<group>"; };
+		567EE23BCA5B2547C8AD5CCB /* macspanso-sm.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "macspanso-sm.png"; sourceTree = "<group>"; };
 		6750794A19508E640DB18607 /* MatchManagerWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchManagerWindow.swift; sourceTree = "<group>"; };
 		7D101A2C6D185C3EC5C0BC8D /* macspanso.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = macspanso.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7D7EBB169B203D1E23937442 /* ViewStubs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewStubs.swift; sourceTree = "<group>"; };
@@ -96,6 +98,7 @@
 		20A5532ABD2B84F1EC62FCA2 /* macspanso */ = {
 			isa = PBXGroup;
 			children = (
+				567EE23BCA5B2547C8AD5CCB /* macspanso-sm.png */,
 				A812FE7A84709891EDC1F593 /* App */,
 				52AF2A16F3FB15621CC5C266 /* MenuBar */,
 				43B251CB6867BA66152BAE40 /* Model */,
@@ -225,6 +228,7 @@
 			buildConfigurationList = 05FCA966E5C3F35F4B3F527C /* Build configuration list for PBXNativeTarget "macspanso" */;
 			buildPhases = (
 				1811DEB55911BCCC39DFC1E7 /* Sources */,
+				6013C43F73B95FEAADFA280C /* Resources */,
 				F459A8210BC3DBB30859557A /* Frameworks */,
 			);
 			buildRules = (
@@ -278,6 +282,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		6013C43F73B95FEAADFA280C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				512F000E089EBE49F2C7DD0F /* macspanso-sm.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		1811DEB55911BCCC39DFC1E7 /* Sources */ = {
