@@ -42,6 +42,7 @@ targets:
     sources:
       - path: macspansoTests
     dependencies:
+      - target: macspanso
       - package: Yams
     settings:
       base:

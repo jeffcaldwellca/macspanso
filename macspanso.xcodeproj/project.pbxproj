@@ -8,13 +8,25 @@
 
 /* Begin PBXBuildFile section */
 		08F6052A816BB9ACCA0C29A1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0E594E96E837F06FCDA74BD /* AppDelegate.swift */; };
+		7DBA6F75EEA2397E14800BA1 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D9311AD3CA4F25DF3E49BF7 /* MenuBarController.swift */; };
 		8ECA817CBF7170DADD934DDA /* Yams in Frameworks */ = {isa = PBXBuildFile; productRef = 5FB62BECB934B23CAC5FA023 /* Yams */; };
 		90E2CD0C6149E612E0DE0475 /* PlaceholderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A2AFC15CA918EC3DE9A940 /* PlaceholderTests.swift */; };
 		940CB95865F935DBDBDDDB21 /* macspansoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73300D0AA66B88477808373 /* macspansoApp.swift */; };
 		A2B847F01BE3904CB019054D /* Yams in Frameworks */ = {isa = PBXBuildFile; productRef = F5A008572CFB07101C8342C3 /* Yams */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		D8142C7E27D0A311C47E3AAE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4C137EBD843B41073140CDC9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E609A0361684D80F77269BBE;
+			remoteInfo = macspanso;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		2D9311AD3CA4F25DF3E49BF7 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
 		35DBB64F4559E50573FEBB39 /* macspansoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = macspansoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		42053EE2AEEB31EC83CE7EAA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		7D101A2C6D185C3EC5C0BC8D /* macspanso.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = macspanso.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -47,6 +59,7 @@
 			isa = PBXGroup;
 			children = (
 				A812FE7A84709891EDC1F593 /* App */,
+				52AF2A16F3FB15621CC5C266 /* MenuBar */,
 			);
 			path = macspanso;
 			sourceTree = "<group>";
@@ -57,6 +70,14 @@
 				E3A2AFC15CA918EC3DE9A940 /* PlaceholderTests.swift */,
 			);
 			path = macspansoTests;
+			sourceTree = "<group>";
+		};
+		52AF2A16F3FB15621CC5C266 /* MenuBar */ = {
+			isa = PBXGroup;
+			children = (
+				2D9311AD3CA4F25DF3E49BF7 /* MenuBarController.swift */,
+			);
+			path = MenuBar;
 			sourceTree = "<group>";
 		};
 		63B5EC8AEA3396D76B53A67D = {
@@ -100,6 +121,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				33D50C2C8FF63C355890B871 /* PBXTargetDependency */,
 			);
 			name = macspansoTests;
 			packageProductDependencies = (
@@ -174,6 +196,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				08F6052A816BB9ACCA0C29A1 /* AppDelegate.swift in Sources */,
+				7DBA6F75EEA2397E14800BA1 /* MenuBarController.swift in Sources */,
 				940CB95865F935DBDBDDDB21 /* macspansoApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -187,6 +210,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		33D50C2C8FF63C355890B871 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E609A0361684D80F77269BBE /* macspanso */;
+			targetProxy = D8142C7E27D0A311C47E3AAE /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		08F1F962335F6DF203C7040A /* Release */ = {
@@ -204,6 +235,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.macspanso.macspansoTests;
 				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/macspanso.app/Contents/MacOS/macspanso";
 			};
 			name = Release;
 		};
@@ -256,6 +288,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.macspanso.macspansoTests;
 				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/macspanso.app/Contents/MacOS/macspanso";
 			};
 			name = Debug;
 		};
