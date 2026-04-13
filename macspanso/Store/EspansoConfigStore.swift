@@ -70,9 +70,11 @@ final class EspansoConfigStore: ObservableObject {
     /// for async FSEvent delivery.
     private func suppressingWatcherEvents(for url: URL, _ body: () throws -> Void) rethrows {
         writingPaths.insert(url.path)
+        writingPaths.insert(matchDirectory.path)   // suppress parent dir event too
         try body()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
             self?.writingPaths.remove(url.path)
+            self?.writingPaths.remove(self?.matchDirectory.path ?? "")
         }
     }
 
