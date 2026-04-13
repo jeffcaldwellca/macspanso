@@ -31,6 +31,7 @@
 		9BCBA5C7D6166D802CA1F54D /* MatchEditorForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = F077C06E3B872B55BA7D135E /* MatchEditorForm.swift */; };
 		A2B847F01BE3904CB019054D /* Yams in Frameworks */ = {isa = PBXBuildFile; productRef = F5A008572CFB07101C8342C3 /* Yams */; };
 		C72420319FBF0791E1119040 /* ViewStubs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D7EBB169B203D1E23937442 /* ViewStubs.swift */; };
+		D248D6A8F3A07EF65A705501 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC6E6239414178F116D8F07F /* AboutView.swift */; };
 		E0FCF244AEE299A5C97C6804 /* MatchManagerWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6750794A19508E640DB18607 /* MatchManagerWindow.swift */; };
 		E6992F88EDDAE0B39C74A914 /* MatchValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F15E7CE6C04870BF8BD59FD /* MatchValidator.swift */; };
 		F111131E613F5C6CC4F8BBBC /* MatchFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BFC9A2FF067F185C8063123 /* MatchFile.swift */; };
@@ -68,6 +69,7 @@
 		9139A78FA597BE9FF574C077 /* VariableBuilderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VariableBuilderView.swift; sourceTree = "<group>"; };
 		9F15E7CE6C04870BF8BD59FD /* MatchValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchValidator.swift; sourceTree = "<group>"; };
 		A0E594E96E837F06FCDA74BD /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		AC6E6239414178F116D8F07F /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		AD5338108243F0B53E1D4DD7 /* MatchManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchManagerView.swift; sourceTree = "<group>"; };
 		B5052F737DE80E9307D1A5CD /* YAMLSerializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YAMLSerializer.swift; sourceTree = "<group>"; };
 		BBB31B0A80C7E4AB1B688D07 /* YAMLParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YAMLParsingTests.swift; sourceTree = "<group>"; };
@@ -190,6 +192,7 @@
 		BC414D2111F12D153DCF19E0 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				AC6E6239414178F116D8F07F /* AboutView.swift */,
 				4998035434E6109CE059E65F /* ExternalEditBanner.swift */,
 				0882C2FC91DCC46DD6BC48EE /* FileTreeView.swift */,
 				0C878548B9B683C2270B1273 /* FormFieldsSection.swift */,
@@ -302,6 +305,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D248D6A8F3A07EF65A705501 /* AboutView.swift in Sources */,
 				08F6052A816BB9ACCA0C29A1 /* AppDelegate.swift in Sources */,
 				8FD245E778174C4BE5A673FF /* EspansoConfigStore.swift in Sources */,
 				0F17F80BC41F084C725C8D3C /* EspansoMatch.swift in Sources */,

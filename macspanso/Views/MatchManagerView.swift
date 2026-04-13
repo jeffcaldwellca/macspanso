@@ -1,11 +1,13 @@
 // macspanso/Views/MatchManagerView.swift
 import SwiftUI
 
+private enum AppTab { case matches, about }
+
 struct MatchManagerView: View {
     @ObservedObject var store: EspansoConfigStore
-    // Passed through to child views in later tasks (toolbar state indicator).
     @ObservedObject var processManager: EspansoProcessManager
 
+    @State private var selectedTab: AppTab = .matches
     @State private var selectedMatchID: UUID? = nil
     @State private var isCreatingNew: Bool = false
     @State private var editorGeneration: Int = 0
@@ -13,6 +15,48 @@ struct MatchManagerView: View {
     @State private var searchText: String = ""
 
     var body: some View {
+        VStack(spacing: 0) {
+            tabBar
+            Divider()
+            tabContent
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .focusNewMatch)) { _ in
+            selectedTab = .matches
+            selectedMatchID = nil
+            isCreatingNew = true
+        }
+    }
+
+    // MARK: - Tab bar
+
+    private var tabBar: some View {
+        HStack(spacing: 0) {
+            TabBarButton(label: "Matches", systemImage: "list.bullet", selected: selectedTab == .matches) {
+                selectedTab = .matches
+            }
+            TabBarButton(label: "About", systemImage: "info.circle", selected: selectedTab == .about) {
+                selectedTab = .about
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 8)
+        .frame(height: 36)
+        .background(Color(nsColor: .windowBackgroundColor))
+    }
+
+    // MARK: - Tab content
+
+    @ViewBuilder
+    private var tabContent: some View {
+        switch selectedTab {
+        case .matches:
+            matchesContent
+        case .about:
+            AboutView()
+        }
+    }
+
+    private var matchesContent: some View {
         // animation() on the ZStack drives both entry and exit transitions for
         // ExternalEditBanner; placing it on the banner itself only animates entry.
         ZStack(alignment: .top) {
@@ -41,11 +85,9 @@ struct MatchManagerView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: store.externallyChangedURL != nil)
-        .onReceive(NotificationCenter.default.publisher(for: .focusNewMatch)) { _ in
-            selectedMatchID = nil
-            isCreatingNew = true
-        }
     }
+
+    // MARK: - Editor panel
 
     @ViewBuilder
     private var editorPanel: some View {
@@ -80,5 +122,27 @@ struct MatchManagerView: View {
                 Spacer()
             }
         }
+    }
+}
+
+// MARK: - TabBarButton
+
+private struct TabBarButton: View {
+    let label: String
+    let systemImage: String
+    let selected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label(label, systemImage: systemImage)
+                .font(.system(size: 12, weight: selected ? .semibold : .regular))
+                .foregroundStyle(selected ? Color.primary : Color.secondary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(selected ? Color.primary.opacity(0.08) : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+        }
+        .buttonStyle(.plain)
     }
 }
