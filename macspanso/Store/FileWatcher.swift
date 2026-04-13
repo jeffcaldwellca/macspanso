@@ -25,7 +25,14 @@ final class FileWatcher {
             queue: queue
         )
         source.setEventHandler { [weak self] in
-            DispatchQueue.main.async { self?.onChange?(url) }
+            DispatchQueue.main.async {
+                guard let self else { return }
+                // Atomic writes replace the inode via rename, invalidating `fd`.
+                // Cancel the stale source and re-open a fresh one so we keep watching.
+                self.stopWatching(url: url)
+                self.watch(url: url)
+                self.onChange?(url)
+            }
         }
         source.setCancelHandler { close(fd) }
         source.resume()

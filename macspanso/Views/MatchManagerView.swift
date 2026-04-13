@@ -8,6 +8,7 @@ struct MatchManagerView: View {
 
     @State private var selectedMatchID: UUID? = nil
     @State private var isCreatingNew: Bool = false
+    @State private var editorGeneration: Int = 0
     @State private var showFileTree: Bool = false
     @State private var searchText: String = ""
 
@@ -55,9 +56,12 @@ struct MatchManagerView: View {
                 match: match,
                 sourceFile: file,
                 store: store,
-                onSave: { selectedMatchID = $0.id },
+                onSave: { selectedMatchID = $0.id; editorGeneration += 1 },
                 onCancel: {}
             )
+            // Increment editorGeneration on save so SwiftUI re-inits the form,
+            // resetting initialMatch and clearing the dirty flag.
+            .id("\(id)-\(editorGeneration)")
         } else if isCreatingNew {
             MatchEditorForm(
                 match: EspansoMatch(),

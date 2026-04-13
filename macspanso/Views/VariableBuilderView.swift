@@ -15,7 +15,7 @@ struct VariableBuilderView: View {
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
 
-            ForEach(Array(varList.enumerated()), id: \.element.name) { i, _ in
+            ForEach(Array(varList.enumerated()), id: \.offset) { i, _ in
                 VarCardView(
                     variable: Binding(
                         get: { i < (vars?.count ?? 0) ? vars![i] : EspansoVar(name: "", type: .echo) },
@@ -211,6 +211,6 @@ struct VarTypePickerSheet: View {
                 .buttonStyle(.bordered)
                 .padding(16)
         }
-        .frame(width: 320)
+        .frame(width: 320, height: 520)
     }
 }

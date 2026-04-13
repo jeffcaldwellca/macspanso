@@ -13,8 +13,8 @@ final class EspansoConfigStore: ObservableObject {
     private let matchDirectory: URL
     private let watcher = FileWatcher()
 
-    /// Paths currently being written by this store; FSEvents for these are suppressed.
-    private var writingPaths: Set<String> = []
+    /// Reference-counted write-in-progress markers; FSEvents for these paths are suppressed.
+    private var writingPaths: [String: Int] = [:]
 
     /// All non-package matches, flattened across all files.
     var allMatches: [EspansoMatch] {
@@ -69,12 +69,17 @@ final class EspansoConfigStore: ObservableObject {
     /// not mistaken for an external edit. Clears after a short delay to account
     /// for async FSEvent delivery.
     private func suppressingWatcherEvents(for url: URL, _ body: () throws -> Void) rethrows {
-        writingPaths.insert(url.path)
-        writingPaths.insert(matchDirectory.path)   // suppress parent dir event too
+        let paths = [url.path, matchDirectory.path]
+        paths.forEach { writingPaths[$0, default: 0] += 1 }
         try body()
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-            self?.writingPaths.remove(url.path)
-            self?.writingPaths.remove(self?.matchDirectory.path ?? "")
+            guard let self else { return }
+            for p in paths {
+                if let count = self.writingPaths[p] {
+                    if count <= 1 { self.writingPaths.removeValue(forKey: p) }
+                    else { self.writingPaths[p] = count - 1 }
+                }
+            }
         }
     }
 
@@ -92,12 +97,14 @@ final class EspansoConfigStore: ObservableObject {
     func update(_ match: EspansoMatch) throws {
         for i in matchFiles.indices {
             if let j = matchFiles[i].matches.firstIndex(where: { $0.id == match.id }) {
-                matchFiles[i].matches[j] = match
                 let url = matchFiles[i].url
-                let updatedMatches = matchFiles[i].matches
+                var updated = matchFiles[i].matches
+                updated[j] = match
+                // Write first; only update in-memory if the write succeeds.
                 try suppressingWatcherEvents(for: url) {
-                    try YAMLSerializer.write(updatedMatches, to: url)
+                    try YAMLSerializer.write(updated, to: url)
                 }
+                matchFiles[i].matches = updated
                 return
             }
         }
@@ -146,7 +153,7 @@ final class EspansoConfigStore: ObservableObject {
     // MARK: - External Change Handling
 
     private func handleExternalChange(at url: URL) {
-        guard !writingPaths.contains(url.path) else { return }
+        guard writingPaths[url.path] == nil else { return }
         externallyChangedURL = url
     }
 
