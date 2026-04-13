@@ -3,14 +3,6 @@
 // Tasks 9, 10, 12, 13 replace these.
 import SwiftUI
 
-struct MatchListView: View {
-    @ObservedObject var store: EspansoConfigStore
-    @Binding var selectedMatchID: UUID?
-    @Binding var showFileTree: Bool
-    @Binding var searchText: String
-    var body: some View { Text("Match list coming soon") }
-}
-
 struct ExternalEditBanner: View {
     let filename: String
     let onReload: () -> Void
