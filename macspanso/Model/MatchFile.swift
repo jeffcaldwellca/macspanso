@@ -1,11 +1,13 @@
 // macspanso/Model/MatchFile.swift
 import Foundation
 
-// Top-level structure of an espanso .yml match file
+// Top-level structure of an espanso .yml match file.
+// `matches` is optional so files that have other top-level keys but no
+// `matches:` key (e.g. global_vars.yml) decode without error.
 public struct MatchFileContent: Codable {
-    public var matches: [EspansoMatch]
+    public var matches: [EspansoMatch]?
 
-    public init(matches: [EspansoMatch] = []) {
+    public init(matches: [EspansoMatch]? = nil) {
         self.matches = matches
     }
 }

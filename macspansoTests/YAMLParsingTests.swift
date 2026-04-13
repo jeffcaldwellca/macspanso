@@ -1,6 +1,5 @@
 // macspansoTests/YAMLParsingTests.swift
 import XCTest
-import Yams
 @testable import macspanso
 
 final class YAMLParsingTests: XCTestCase {
@@ -114,9 +113,35 @@ final class YAMLParsingTests: XCTestCase {
     }
 
     func testMissingMatchesKey() throws {
-        // Espanso files with no matches key should return empty, not throw
+        // Comment-only file — Yams returns nil document, decoder returns []
         let yaml = "# empty file\n"
         let matches = try YAMLSerializer.decode(yaml: yaml)
         XCTAssertEqual(matches.count, 0)
+    }
+
+    func testFileWithOtherKeysButNoMatches() throws {
+        // Real espanso pattern: global_vars.yml has no matches: key
+        let yaml = """
+        global_vars:
+          - name: myname
+            type: echo
+            params:
+              echo: "John"
+        """
+        let matches = try YAMLSerializer.decode(yaml: yaml)
+        XCTAssertEqual(matches.count, 0)
+    }
+
+    func testCommentedFileWithMatches() throws {
+        // Files that start with a comment header must still parse correctly
+        let yaml = """
+        # My custom shortcuts
+        matches:
+          - trigger: "::hello"
+            replace: "Hello!"
+        """
+        let matches = try YAMLSerializer.decode(yaml: yaml)
+        XCTAssertEqual(matches.count, 1)
+        XCTAssertEqual(matches[0].trigger, "::hello")
     }
 }

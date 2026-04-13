@@ -8,13 +8,20 @@ public enum YAMLSerializer {
 
     /// Decode matches from a YAML string (used in tests and from files).
     public static func decode(yaml: String) throws -> [EspansoMatch] {
-        // Handle empty/comment-only files gracefully
         let trimmed = yaml.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, !trimmed.hasPrefix("#") else { return [] }
+        guard !trimmed.isEmpty else { return [] }
 
-        // Yams returns nil for a file that has no "matches" key
-        let content = try YAMLDecoder().decode(MatchFileContent?.self, from: yaml)
-        return content?.matches ?? []
+        // Files with no "matches:" key (global_vars.yml, etc.) decode fine because
+        // MatchFileContent.matches is optional — they return [].
+        // Comment-only files produce a non-mapping YAML node, causing a top-level
+        // typeMismatch. We catch only that case (codingPath is empty) so errors inside
+        // individual matches still propagate.
+        do {
+            let content = try YAMLDecoder().decode(MatchFileContent.self, from: yaml)
+            return content.matches ?? []
+        } catch DecodingError.typeMismatch(_, let ctx) where ctx.codingPath.isEmpty {
+            return []
+        }
     }
 
     /// Decode matches from a file URL.
