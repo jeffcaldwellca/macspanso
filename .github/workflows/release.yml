@@ -34,22 +34,30 @@ jobs:
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
+
           echo "$MACOS_CERTIFICATE" | base64 --decode > certificate.p12
 
-          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security default-keychain -s build.keychain
-          security list-keychains -d user -s build.keychain login.keychain
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security set-keychain-settings -lut 21600 build.keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
           security import certificate.p12 \
-            -k build.keychain \
+            -k "$KEYCHAIN_PATH" \
             -P "$MACOS_CERTIFICATE_PASSWORD" \
-            -T /usr/bin/codesign
+            -T /usr/bin/codesign \
+            -T /usr/bin/security
 
           security set-key-partition-list \
             -S apple-tool:,apple:,codesign: \
-            -s -k "$KEYCHAIN_PASSWORD" build.keychain
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Append build keychain to search list (preserve existing keychains)
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+          security default-keychain -s "$KEYCHAIN_PATH"
+
+          # Verify the certificate was imported
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
 
           rm certificate.p12
 
@@ -66,6 +74,7 @@ jobs:
 
       - name: Archive
         run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
           xcodebuild archive \
             -scheme macspanso \
             -configuration Release \
@@ -73,7 +82,7 @@ jobs:
             DEVELOPMENT_TEAM=88ZPCYS252 \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Developer ID Application" \
-            OTHER_CODE_SIGN_FLAGS="--keychain $HOME/Library/Keychains/build.keychain-db"
+            OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH"
 
       - name: Export signed .app
         run: |
