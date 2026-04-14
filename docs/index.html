@@ -146,8 +146,16 @@
     /* ── Features ── */
     .features {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 16px;
+    }
+
+    @media (max-width: 800px) {
+      .features { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 480px) {
+      .features { grid-template-columns: 1fr; }
     }
 
     .feature-card {
@@ -323,7 +331,7 @@
         <p>One match, many triggers — or match by regular expression for maximum flexibility.</p>
       </div>
       <div class="feature-card">
-        <div class="icon"><i class="bi bi-folder-tree"></i></div>
+        <div class="icon"><i class="bi bi-diagram-3"></i></div>
         <h3>File tree view</h3>
         <p>Browse matches by YAML file or as a flat list. See exactly where each match lives.</p>
       </div>
@@ -333,7 +341,7 @@
         <p>A banner appears when a file changes outside the app, with reload or keep options.</p>
       </div>
       <div class="feature-card">
-        <div class="icon"><i class="bi bi-menubar"></i></div>
+        <div class="icon"><i class="bi bi-menu-app"></i></div>
         <h3>Menu bar controls</h3>
         <p>Enable, disable, or restart espanso without leaving the keyboard.</p>
       </div>
