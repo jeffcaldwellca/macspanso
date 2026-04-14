@@ -72,7 +72,8 @@ jobs:
             -archivePath build/macspanso.xcarchive \
             DEVELOPMENT_TEAM=88ZPCYS252 \
             CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="Developer ID Application"
+            CODE_SIGN_IDENTITY="Developer ID Application" \
+            OTHER_CODE_SIGN_FLAGS="--keychain ~/Library/Keychains/build.keychain-db"
 
       - name: Export signed .app
         run: |
