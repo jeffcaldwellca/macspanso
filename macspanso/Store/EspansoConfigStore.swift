@@ -10,7 +10,7 @@ final class EspansoConfigStore: ObservableObject {
     /// Set to nil after the user responds to the reload banner.
     @Published var externallyChangedURL: URL? = nil
 
-    private let matchDirectory: URL
+    let matchDirectory: URL
     private let watcher = FileWatcher()
 
     /// Reference-counted write-in-progress markers; FSEvents for these paths are suppressed.
