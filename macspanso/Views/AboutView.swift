@@ -33,13 +33,9 @@ struct AboutView: View {
 
     private var identity: some View {
         VStack(spacing: 10) {
-            if let img = NSImage(named: "logo-sm") {
-                Image(nsImage: img)
-                    .resizable()
-                    .renderingMode(.template)
-                    .foregroundStyle(Color.primary)
-                    .frame(width: 64, height: 64)
-            }
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .frame(width: 64, height: 64)
             Text("macspanso")
                 .font(.system(size: 28, weight: .bold))
             HStack(spacing: 6) {
