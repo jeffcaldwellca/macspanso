@@ -1,6 +1,7 @@
 // macspanso/MenuBar/MenuBarController.swift
 import AppKit
 import Combine
+import ServiceManagement
 
 @MainActor
 final class MenuBarController {
@@ -9,12 +10,14 @@ final class MenuBarController {
     private let processManager: EspansoProcessManager
     private var cancellables = Set<AnyCancellable>()
     private var windowController: MatchManagerWindowController?
+    private let backupManager: BackupManager
 
     private static let espansoURL = URL(string: "https://espanso.org")!
 
     init(store: EspansoConfigStore, processManager: EspansoProcessManager) {
         self.store = store
         self.processManager = processManager
+        self.backupManager = BackupManager(matchDirectory: store.matchDirectory, store: store)
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         configureIcon()
@@ -74,6 +77,18 @@ final class MenuBarController {
 
             menu.addItem(.separator())
 
+            let exportItem = NSMenuItem(title: "Export Backup…",
+                                        action: #selector(exportBackup), keyEquivalent: "")
+            exportItem.target = self
+            menu.addItem(exportItem)
+
+            let importItem = NSMenuItem(title: "Import Backup…",
+                                        action: #selector(importBackup), keyEquivalent: "")
+            importItem.target = self
+            menu.addItem(importItem)
+
+            menu.addItem(.separator())
+
             let enableItem = NSMenuItem(title: "Espanso Enabled",
                                         action: #selector(toggleEnabled), keyEquivalent: "")
             enableItem.target = self
@@ -86,6 +101,13 @@ final class MenuBarController {
             restartItem.target = self
             menu.addItem(restartItem)
         }
+
+        menu.addItem(.separator())
+        let launchAtLoginItem = NSMenuItem(title: "Launch at Login",
+                                           action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
+        launchAtLoginItem.target = self
+        launchAtLoginItem.state = (SMAppService.mainApp.status == .enabled) ? .on : .off
+        menu.addItem(launchAtLoginItem)
 
         menu.addItem(.separator())
         let aboutItem = NSMenuItem(title: "About macspanso",
@@ -157,5 +179,26 @@ final class MenuBarController {
 
     @objc private func openEspansoSite() {
         NSWorkspace.shared.open(Self.espansoURL)
+    }
+
+    @objc private func exportBackup() {
+        Task { await backupManager.exportBackup() }
+    }
+
+    @objc private func importBackup() {
+        Task { await backupManager.importBackup() }
+    }
+
+    @objc private func toggleLaunchAtLogin() {
+        do {
+            if SMAppService.mainApp.status == .enabled {
+                try SMAppService.mainApp.unregister()
+            } else {
+                try SMAppService.mainApp.register()
+            }
+        } catch {
+            NSLog("Launch at login toggle failed: %@", error.localizedDescription)
+        }
+        buildMenu()
     }
 }
