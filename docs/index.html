@@ -3,8 +3,45 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>macspanso — espanso GUI for macOS</title>
-  <meta name="description" content="A native macOS menu bar app for managing espanso text expansion matches — no YAML editing required." />
+
+  <!-- Primary SEO -->
+  <title>macspanso — Native espanso GUI for macOS</title>
+  <meta name="description" content="macspanso is a free, open-source macOS menu bar app for managing espanso text expansion matches. Create, edit, and organise triggers without touching YAML." />
+  <meta name="keywords" content="espanso, macOS, text expander, text expansion, GUI, menu bar, YAML, macspanso, Homebrew, SwiftUI" />
+  <link rel="canonical" href="https://jeffcaldwellca.github.io/macspanso/" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://jeffcaldwellca.github.io/macspanso/" />
+  <meta property="og:title" content="macspanso — Native espanso GUI for macOS" />
+  <meta property="og:description" content="A free, open-source macOS menu bar app for managing espanso text expansion matches — no YAML editing required." />
+  <meta property="og:image" content="https://jeffcaldwellca.github.io/macspanso/logo.png" />
+
+  <!-- Twitter / X Card -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="macspanso — Native espanso GUI for macOS" />
+  <meta name="twitter:description" content="A free, open-source macOS menu bar app for managing espanso text expansion matches — no YAML editing required." />
+  <meta name="twitter:image" content="https://jeffcaldwellca.github.io/macspanso/logo.png" />
+
+  <!-- JSON-LD structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "macspanso",
+    "operatingSystem": "macOS 13+",
+    "applicationCategory": "UtilitiesApplication",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "url": "https://jeffcaldwellca.github.io/macspanso/",
+    "downloadUrl": "https://github.com/jeffcaldwellca/macspanso/releases/latest",
+    "license": "https://opensource.org/licenses/MIT",
+    "description": "A native macOS menu bar app for managing espanso text expansion matches — no YAML editing required."
+  }
+  </script>
+
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
   <style>
     :root {
       --bg: #0d1117;
@@ -123,6 +160,7 @@
     .feature-card .icon {
       font-size: 1.5rem;
       margin-bottom: 10px;
+      color: var(--accent);
     }
 
     .feature-card h3 {
@@ -229,58 +267,11 @@
     </div>
     <div class="cta-group">
       <a class="btn btn-primary" href="https://github.com/jeffcaldwellca/macspanso/releases/latest">
-        ⬇ Download DMG
+        <i class="bi bi-download"></i> Download DMG
       </a>
       <a class="btn btn-secondary" href="https://github.com/jeffcaldwellca/macspanso">
-        ★ View on GitHub
+        <i class="bi bi-github"></i> View on GitHub
       </a>
-    </div>
-  </section>
-
-  <!-- Features -->
-  <section class="section">
-    <h2>What it does</h2>
-    <div class="features">
-      <div class="feature-card">
-        <div class="icon">✏️</div>
-        <h3>Create matches</h3>
-        <p>Type a trigger, type the replacement, save. No YAML, no terminal.</p>
-      </div>
-      <div class="feature-card">
-        <div class="icon">📋</div>
-        <h3>Form matches</h3>
-        <p>Add <code>[[placeholders]]</code> and espanso will show a fill-in popup before expanding.</p>
-      </div>
-      <div class="feature-card">
-        <div class="icon">🔣</div>
-        <h3>Variables</h3>
-        <p>Attach date, shell, clipboard, random, and other variable types to any match.</p>
-      </div>
-      <div class="feature-card">
-        <div class="icon">🔀</div>
-        <h3>Multi-trigger & regex</h3>
-        <p>One match, many triggers — or match by regular expression for maximum flexibility.</p>
-      </div>
-      <div class="feature-card">
-        <div class="icon">🗂</div>
-        <h3>File tree view</h3>
-        <p>Browse matches by YAML file or as a flat list. See exactly where each match lives.</p>
-      </div>
-      <div class="feature-card">
-        <div class="icon">👁</div>
-        <h3>External edit detection</h3>
-        <p>A banner appears when a file changes outside the app, with reload or keep options.</p>
-      </div>
-      <div class="feature-card">
-        <div class="icon">🍎</div>
-        <h3>Menu bar controls</h3>
-        <p>Enable, disable, or restart espanso without leaving the keyboard.</p>
-      </div>
-      <div class="feature-card">
-        <div class="icon">🔍</div>
-        <h3>Search</h3>
-        <p>Filter matches instantly by trigger, replacement preview, or label.</p>
-      </div>
     </div>
   </section>
 
@@ -289,8 +280,8 @@
     <h2>Installation</h2>
 
     <div class="reqs">
-      <span class="req">🍎 macOS 13 Ventura or later</span>
-      <span class="req">⚡ espanso installed &amp; running</span>
+      <span class="req"><i class="bi bi-apple"></i> macOS 13 Ventura or later</span>
+      <span class="req"><i class="bi bi-lightning-charge-fill"></i> espanso installed &amp; running</span>
     </div>
 
     <div class="install-block">
@@ -303,6 +294,53 @@
       <div class="install-option">
         <h3>Direct download</h3>
         <p style="font-size:0.875rem;color:var(--muted);">Download the latest <code>.dmg</code> from the <a href="https://github.com/jeffcaldwellca/macspanso/releases/latest">Releases page</a>, open it, and drag macspanso to your Applications folder.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section" style="padding-top: 0;">
+    <h2>What it does</h2>
+    <div class="features">
+      <div class="feature-card">
+        <div class="icon"><i class="bi bi-pencil"></i></div>
+        <h3>Create matches</h3>
+        <p>Type a trigger, type the replacement, save. No YAML, no terminal.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon"><i class="bi bi-ui-checks"></i></div>
+        <h3>Form matches</h3>
+        <p>Add <code>[[placeholders]]</code> and espanso will show a fill-in popup before expanding.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon"><i class="bi bi-braces"></i></div>
+        <h3>Variables</h3>
+        <p>Attach date, shell, clipboard, random, and other variable types to any match.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon"><i class="bi bi-shuffle"></i></div>
+        <h3>Multi-trigger &amp; regex</h3>
+        <p>One match, many triggers — or match by regular expression for maximum flexibility.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon"><i class="bi bi-folder-tree"></i></div>
+        <h3>File tree view</h3>
+        <p>Browse matches by YAML file or as a flat list. See exactly where each match lives.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon"><i class="bi bi-eye"></i></div>
+        <h3>External edit detection</h3>
+        <p>A banner appears when a file changes outside the app, with reload or keep options.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon"><i class="bi bi-menubar"></i></div>
+        <h3>Menu bar controls</h3>
+        <p>Enable, disable, or restart espanso without leaving the keyboard.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon"><i class="bi bi-search"></i></div>
+        <h3>Search</h3>
+        <p>Filter matches instantly by trigger, replacement preview, or label.</p>
       </div>
     </div>
   </section>
