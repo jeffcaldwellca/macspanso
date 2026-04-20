@@ -90,6 +90,11 @@
       box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     }
 
+    .hero-brew {
+      max-width: 520px;
+      width: 100%;
+    }
+
     .hero h1 {
       font-size: 2.8rem;
       font-weight: 700;
@@ -298,40 +303,16 @@
       <img src="https://img.shields.io/badge/macOS-13%2B-blue" alt="macOS 13+" />
       <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License" />
     </div>
+    <div class="code-block hero-brew">
+      <code>brew install --cask jeffcaldwellca/tap/macspanso</code>
+      <button class="copy-btn" onclick="copyInstall(this)" title="Copy to clipboard"><i class="bi bi-clipboard"></i></button>
+    </div>
     <div class="cta-group">
-      <a class="btn btn-primary" href="https://github.com/jeffcaldwellca/macspanso/releases/latest/download/macspanso-1.2.0.dmg">
-        <i class="bi bi-download"></i> Download DMG
-      </a>
-      <a class="btn btn-secondary" href="https://github.com/jeffcaldwellca/macspanso">
+      <a class="btn btn-primary" href="https://github.com/jeffcaldwellca/macspanso">
         <i class="bi bi-github"></i> View on GitHub
       </a>
     </div>
-  </section>
-
-  <!-- Install -->
-  <section class="section" style="padding-top: 0;">
-    <h2>Installation</h2>
-
-    <div class="reqs">
-      <span class="req"><i class="bi bi-apple"></i> macOS 13 Ventura or later</span>
-      <span class="req"><i class="bi bi-lightning-charge-fill"></i> espanso (auto-installed via Homebrew)</span>
-    </div>
-
-    <div class="install-block">
-      <div class="install-option">
-        <h3>Homebrew <span class="tag">recommended</span></h3>
-        <div class="code-block">
-          <code>brew install --cask jeffcaldwellca/tap/macspanso</code>
-          <button class="copy-btn" onclick="copyInstall(this)" title="Copy to clipboard"><i class="bi bi-clipboard"></i></button>
-        </div>
-        <p style="font-size:0.8rem;color:var(--muted);margin-top:8px;">Automatically installs espanso as a dependency if it isn't already present.</p>
-      </div>
-      <hr class="divider" />
-      <div class="install-option">
-        <h3>Direct download</h3>
-        <p style="font-size:0.875rem;color:var(--muted);">Download the latest <code>.dmg</code> from the <a href="https://github.com/jeffcaldwellca/macspanso/releases/latest">Releases page</a>, open it, and drag macspanso to your Applications folder.</p>
-      </div>
-    </div>
+    <p style="font-size:0.8rem;color:var(--muted);">Automatically installs espanso if it isn't already present.</p>
   </section>
 
   <!-- Features -->
@@ -377,6 +358,32 @@
         <div class="icon"><i class="bi bi-search"></i></div>
         <h3>Search</h3>
         <p>Filter matches instantly by trigger, replacement preview, or label.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Install -->
+  <section class="section" style="padding-top: 0;">
+    <h2>Installation</h2>
+
+    <div class="reqs">
+      <span class="req"><i class="bi bi-apple"></i> macOS 13 Ventura or later</span>
+      <span class="req"><i class="bi bi-lightning-charge-fill"></i> espanso (auto-installed via Homebrew)</span>
+    </div>
+
+    <div class="install-block">
+      <div class="install-option">
+        <h3>Homebrew <span class="tag">recommended</span></h3>
+        <div class="code-block">
+          <code>brew install --cask jeffcaldwellca/tap/macspanso</code>
+          <button class="copy-btn" onclick="copyInstall(this)" title="Copy to clipboard"><i class="bi bi-clipboard"></i></button>
+        </div>
+        <p style="font-size:0.8rem;color:var(--muted);margin-top:8px;">Automatically installs espanso as a dependency if it isn't already present.</p>
+      </div>
+      <hr class="divider" />
+      <div class="install-option">
+        <h3>Direct download</h3>
+        <p style="font-size:0.875rem;color:var(--muted);">Download the latest <code>.dmg</code> from the <a href="https://github.com/jeffcaldwellca/macspanso/releases/latest">Releases page</a>, open it, and drag macspanso to your Applications folder.</p>
       </div>
     </div>
   </section>
