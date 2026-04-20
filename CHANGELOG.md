@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.0] - 2026-04-20
+
+### Fixed
+- **About screen** — version number now correctly reflects the current release; app icon displayed at full resolution instead of the low-res menu bar icon.
+
+### Improved
+- **About screen** — added a Website link (`jeffcaldwellca.github.io/macspanso`) alongside the existing GitHub and espanso.org links.
+- **Form match editor** — the template field now has a "Template" section label and an inline placeholder hint (`e.g. Hello [[name]], your email is [[email]]`) so it is clear where to type. A descriptive caption explains the `[[placeholder]]` syntax. When no placeholders have been added yet, a guidance message is shown where the field cards will appear.
+
 ## [1.1.0] - 2026-04-14
 
 ### Added

@@ -79,6 +79,11 @@ struct AboutView: View {
     private var linksSection: some View {
         HStack(spacing: 16) {
             LinkButton(
+                label: "Website",
+                systemImage: "globe",
+                url: URL(string: "https://jeffcaldwellca.github.io/macspanso/")!
+            )
+            LinkButton(
                 label: "GitHub",
                 systemImage: "arrow.up.right.square",
                 url: URL(string: "https://github.com/jeffcaldwellca/macspanso")!

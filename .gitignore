@@ -36,3 +36,7 @@ certificate.p12
 # Editor swap files
 *.swp
 *.swo
+
+# Other
+docs/*.md
+*.zip

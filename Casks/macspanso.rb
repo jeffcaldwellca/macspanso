@@ -1,5 +1,5 @@
 cask "macspanso" do
-  version "1.0.0"
+  version "1.2.0"
   sha256 "PLACEHOLDER_UPDATED_BY_RELEASE_WORKFLOW"
 
   url "https://github.com/jeffcaldwellca/macspanso/releases/download/v#{version}/macspanso-#{version}.dmg"

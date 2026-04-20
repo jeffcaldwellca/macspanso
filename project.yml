@@ -27,8 +27,8 @@ targets:
         LSUIElement: true
         CFBundleName: macspanso
         CFBundleDisplayName: macspanso
-        CFBundleShortVersionString: "1.1.0"
-        CFBundleVersion: "2"
+        CFBundleShortVersionString: "1.2.0"
+        CFBundleVersion: "3"
         NSHumanReadableCopyright: "Copyright © 2026 Macspanso"
     dependencies:
       - package: Yams

@@ -10,7 +10,12 @@ struct FormFieldsSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             templateEditor
-            if !placeholderNames.isEmpty {
+            if placeholderNames.isEmpty {
+                Text("Form fields will appear here once you add a [[placeholder]] to the template above.")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .italic()
+            } else {
                 fieldCards
             }
         }
@@ -20,14 +25,29 @@ struct FormFieldsSection: View {
 
     private var templateEditor: some View {
         VStack(alignment: .leading, spacing: 6) {
-            TextEditor(text: $formTemplate)
-                .font(.system(.body, design: .monospaced))
-                .frame(minHeight: 80)
-                .overlay(RoundedRectangle(cornerRadius: 5).stroke(.separator))
-                .onChange(of: formTemplate) { _ in pruneOrphanedFields() }
-            Text("Use [[placeholder]] to mark each fill-in blank.")
+            Text("Template")
                 .font(.caption)
-                .foregroundStyle(.tertiary)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+            ZStack(alignment: .topLeading) {
+                TextEditor(text: $formTemplate)
+                    .font(.system(.body, design: .monospaced))
+                    .frame(minHeight: 80)
+                    .overlay(RoundedRectangle(cornerRadius: 5).stroke(.separator))
+                    .onChange(of: formTemplate) { _ in pruneOrphanedFields() }
+                if formTemplate.isEmpty {
+                    Text("e.g. Hello [[name]], your email is [[email]]")
+                        .font(.system(.body, design: .monospaced))
+                        .foregroundStyle(.tertiary)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 8)
+                        .allowsHitTesting(false)
+                }
+            }
+            Text("Type [[placeholder]] anywhere in the template to create a fill-in field. Each placeholder becomes a configurable field below.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 
