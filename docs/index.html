@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Primary SEO -->
+  <title>macspanso — Native espanso GUI for macOS</title>
+  <meta name="description" content="macspanso is a free, open-source macOS menu bar app for managing espanso text expansion matches. Create, edit, and organise triggers without touching YAML." />
+  <meta name="keywords" content="espanso, macOS, text expander, text expansion, GUI, menu bar, YAML, macspanso, Homebrew, SwiftUI" />
+  <link rel="canonical" href="https://jeffcaldwellca.github.io/macspanso/" />
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://jeffcaldwellca.github.io/macspanso/" />
+  <meta property="og:title" content="macspanso — Native espanso GUI for macOS" />
+  <meta property="og:description" content="A free, open-source macOS menu bar app for managing espanso text expansion matches — no YAML editing required." />
+  <meta property="og:image" content="https://jeffcaldwellca.github.io/macspanso/logo.png" />
+
+  <!-- Twitter / X Card -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="macspanso — Native espanso GUI for macOS" />
+  <meta name="twitter:description" content="A free, open-source macOS menu bar app for managing espanso text expansion matches — no YAML editing required." />
+  <meta name="twitter:image" content="https://jeffcaldwellca.github.io/macspanso/logo.png" />
+
+  <!-- JSON-LD structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "macspanso",
+    "operatingSystem": "macOS 13+",
+    "applicationCategory": "UtilitiesApplication",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "url": "https://jeffcaldwellca.github.io/macspanso/",
+    "downloadUrl": "https://github.com/jeffcaldwellca/macspanso/releases/latest",
+    "license": "https://opensource.org/licenses/MIT",
+    "description": "A native macOS menu bar app for managing espanso text expansion matches — no YAML editing required."
+  }
+  </script>
+
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --accent: #2f81f7;
+      --accent-dim: #1a4a8a;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --green: #3fb950;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Hero ── */
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 80px 24px 60px;
+      gap: 20px;
+    }
+
+    .hero img {
+      width: 96px;
+      height: 96px;
+      border-radius: 22px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    .hero h1 {
+      font-size: 2.8rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 520px;
+    }
+
+    .badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .badges img { height: 20px; }
+
+    .cta-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; text-decoration: none; }
+
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+
+    /* ── Sections ── */
+    .section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 48px 24px;
+    }
+
+    .section h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    /* ── Features ── */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 800px) {
+      .features { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 480px) {
+      .features { grid-template-columns: 1fr; }
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+
+    .feature-card .icon {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+      color: var(--accent);
+    }
+
+    .feature-card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .feature-card p {
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    /* ── Install ── */
+    .install-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .install-option h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tag {
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: var(--green);
+      color: #000;
+      padding: 2px 8px;
+      border-radius: 99px;
+    }
+
+    .code-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 0.875rem;
+      color: var(--text);
+      overflow-x: auto;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Requirement pill ── */
+    .req {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 4px 14px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .reqs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: -16px;
+      margin-bottom: 32px;
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      text-align: center;
+      padding: 32px 24px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    footer a { color: var(--muted); }
+    footer a:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <section class="hero">
+    <img src="logo.png" alt="macspanso logo" />
+    <h1>macspanso</h1>
+    <p>A native macOS menu bar app for managing <a href="https://espanso.org" target="_blank">espanso</a> text expansion matches — no YAML editing required.</p>
+    <div class="badges">
+      <img src="https://img.shields.io/badge/macOS-13%2B-blue" alt="macOS 13+" />
+      <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License" />
+    </div>
+    <div class="cta-group">
+      <a class="btn btn-primary" href="https://github.com/jeffcaldwellca/macspanso/releases/latest/download/macspanso-1.0.0.dmg">
+        <i class="bi bi-download"></i> Download DMG
+      </a>
+      <a class="btn btn-secondary" href="https://github.com/jeffcaldwellca/macspanso">
+        <i class="bi bi-github"></i> View on GitHub
+      </a>
+    </div>
+  </section>
+
+  <!-- Install -->
+  <section class="section" style="padding-top: 0;">
+    <h2>Installation</h2>
+
+    <div class="reqs">
+      <span class="req"><i class="bi bi-apple"></i> macOS 13 Ventura or later</span>
+      <span class="req"><i class="bi bi-lightning-charge-fill"></i> espanso (auto-installed via Homebrew)</span>
+    </div>
+
+    <div class="install-block">
+      <div class="install-option">
+        <h3>Homebrew <span class="tag">recommended</span></h3>
+        <div class="code-block">brew install --cask jeffcaldwellca/tap/macspanso</div>
+        <p style="font-size:0.8rem;color:var(--muted);margin-top:8px;">Automatically installs espanso as a dependency if it isn't already present.</p>
+      </div>
+      <hr class="divider" />
+      <div class="install-option">
+        <h3>Direct download</h3>
+        <p style="font-size:0.875rem;color:var(--muted);">Download the latest <code>.dmg</code> from the <a href="https://github.com/jeffcaldwellca/macspanso/releases/latest">Releases page</a>, open it, and drag macspanso to your Applications folder.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section" style="padding-top: 0;">
+    <h2>What it does</h2>
+    <div class="features">
+      <div class="feature-card">
+        <div class="icon"><i class="bi bi-pencil"></i></div>
+        <h3>Create matches</h3>
+        <p>Type a trigger, type the replacement, save. No YAML, no terminal.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon"><i class="bi bi-ui-checks"></i></div>
+        <h3>Form matches</h3>
+        <p>Add <code>[[placeholders]]</code> and espanso will show a fill-in popup before expanding.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon"><i class="bi bi-braces"></i></div>
+        <h3>Variables</h3>
+        <p>Attach date, shell, clipboard, random, and other variable types to any match.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon"><i class="bi bi-shuffle"></i></div>
+        <h3>Multi-trigger &amp; regex</h3>
+        <p>One match, many triggers — or match by regular expression for maximum flexibility.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon"><i class="bi bi-diagram-3"></i></div>
+        <h3>File tree view</h3>
+        <p>Browse matches by YAML file or as a flat list. See exactly where each match lives.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon"><i class="bi bi-eye"></i></div>
+        <h3>External edit detection</h3>
+        <p>A banner appears when a file changes outside the app, with reload or keep options.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon"><i class="bi bi-menu-app"></i></div>
+        <h3>Menu bar controls</h3>
+        <p>Enable, disable, or restart espanso without leaving the keyboard.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon"><i class="bi bi-search"></i></div>
+        <h3>Search</h3>
+        <p>Filter matches instantly by trigger, replacement preview, or label.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>
+      macspanso is open source &amp; MIT licensed.
+      <a href="https://github.com/jeffcaldwellca/macspanso" target="_blank">github.com/jeffcaldwellca/macspanso</a>
+    </p>
+  </footer>
+
+</body>
+</html>
