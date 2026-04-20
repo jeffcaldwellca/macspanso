@@ -11,13 +11,16 @@ final class MenuBarController {
     private var cancellables = Set<AnyCancellable>()
     private var windowController: MatchManagerWindowController?
     private let backupManager: BackupManager
+    private let updateChecker: UpdateChecker
 
     private static let espansoURL = URL(string: "https://espanso.org")!
+    private static let releasesURL = URL(string: "https://github.com/jeffcaldwellca/macspanso/releases/latest")!
 
-    init(store: EspansoConfigStore, processManager: EspansoProcessManager) {
+    init(store: EspansoConfigStore, processManager: EspansoProcessManager, updateChecker: UpdateChecker) {
         self.store = store
         self.processManager = processManager
         self.backupManager = BackupManager(matchDirectory: store.matchDirectory, store: store)
+        self.updateChecker = updateChecker
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         configureIcon()
@@ -29,14 +32,31 @@ final class MenuBarController {
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.buildMenu() }
             .store(in: &cancellables)
+
+        updateChecker.onStateChange = { [weak self] in
+            self?.configureIcon()
+            self?.buildMenu()
+        }
     }
 
     private func configureIcon() {
-        if let button = statusItem.button {
-            let icon = NSImage(named: "logo-sm") ?? NSImage(systemSymbolName: "text.cursor", accessibilityDescription: "macspanso")!
-            icon.isTemplate = true
-            icon.size = NSSize(width: 16, height: 16)
-            button.image = icon
+        guard let button = statusItem.button else { return }
+        let icon = NSImage(named: "logo-sm") ?? NSImage(systemSymbolName: "text.cursor", accessibilityDescription: "macspanso")!
+        icon.isTemplate = true
+        icon.size = NSSize(width: 16, height: 16)
+        button.image = icon
+        // Show a dot badge when an update is available.
+        if updateChecker.updateAvailable {
+            let dot = NSImage(systemSymbolName: "circle.fill", accessibilityDescription: nil)!
+            dot.size = NSSize(width: 6, height: 6)
+            button.imagePosition = .imageLeft
+            let attributed = NSMutableAttributedString(string: " ")
+            let attach = NSTextAttachment()
+            attach.image = dot
+            attributed.append(NSAttributedString(attachment: attach))
+            button.attributedTitle = attributed
+        } else {
+            button.attributedTitle = NSAttributedString(string: "")
         }
     }
 
@@ -115,6 +135,26 @@ final class MenuBarController {
         aboutItem.target = self
         menu.addItem(aboutItem)
 
+        // Update items
+        if updateChecker.updateAvailable, let latest = updateChecker.latestVersion {
+            let updateItem = NSMenuItem(
+                title: "Update Available — v\(latest) →",
+                action: #selector(openReleasePage),
+                keyEquivalent: ""
+            )
+            updateItem.target = self
+            menu.addItem(updateItem)
+        } else {
+            let checkItem = NSMenuItem(
+                title: "Check for Updates…",
+                action: #selector(checkForUpdates),
+                keyEquivalent: ""
+            )
+            checkItem.target = self
+            menu.addItem(checkItem)
+        }
+
+        menu.addItem(.separator())
         let quitItem = NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)),
                                   keyEquivalent: "q")
         menu.addItem(quitItem)
@@ -187,6 +227,14 @@ final class MenuBarController {
 
     @objc private func importBackup() {
         Task { await backupManager.importBackup() }
+    }
+
+    @objc private func openReleasePage() {
+        NSWorkspace.shared.open(Self.releasesURL)
+    }
+
+    @objc private func checkForUpdates() {
+        updateChecker.checkNow()
     }
 
     @objc private func toggleLaunchAtLogin() {
