@@ -55,7 +55,11 @@ struct MatchManagerView: View {
         case .matches:
             matchesContent
         case .about:
-            AboutView()
+            AboutView(
+                matchDirectory: store.matchDirectory,
+                store: store,
+                processManager: processManager
+            )
         }
     }
 

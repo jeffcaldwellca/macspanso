@@ -2,6 +2,12 @@
 import SwiftUI
 
 struct AboutView: View {
+    var matchDirectory: URL? = nil
+    var store: EspansoConfigStore? = nil
+    var processManager: EspansoProcessManager? = nil
+
+    @State private var showDiagnostics = false
+
     private var version: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
     }
@@ -19,6 +25,10 @@ struct AboutView: View {
                 Divider().padding(.horizontal, 40)
                 description
                 Divider().padding(.horizontal, 40)
+                if matchDirectory != nil {
+                    matchDirectorySection
+                    Divider().padding(.horizontal, 40)
+                }
                 licenseSection
                 Divider().padding(.horizontal, 40)
                 linksSection
@@ -27,6 +37,11 @@ struct AboutView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(nsColor: .windowBackgroundColor))
+        .sheet(isPresented: $showDiagnostics) {
+            if let s = store, let p = processManager {
+                DiagnosticsView(store: s, processManager: p)
+            }
+        }
     }
 
     // MARK: - Sections
@@ -58,6 +73,38 @@ struct AboutView: View {
             .padding(.vertical, 24)
     }
 
+    private var matchDirectorySection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("Match Directory", systemImage: "folder")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            if let url = matchDirectory {
+                HStack(spacing: 8) {
+                    Text(url.path)
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Button {
+                        NSWorkspace.shared.open(url)
+                    } label: {
+                        Label("Reveal", systemImage: "arrow.up.right.square")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+            }
+        }
+        .padding(.horizontal, 40)
+        .padding(.vertical, 24)
+    }
+
     private var licenseSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Label("License", systemImage: "doc.text")
@@ -77,22 +124,35 @@ struct AboutView: View {
     }
 
     private var linksSection: some View {
-        HStack(spacing: 16) {
-            LinkButton(
-                label: "Website",
-                systemImage: "globe",
-                url: URL(string: "https://jeffcaldwellca.github.io/macspanso/")!
-            )
-            LinkButton(
-                label: "GitHub",
-                systemImage: "arrow.up.right.square",
-                url: URL(string: "https://github.com/jeffcaldwellca/macspanso")!
-            )
-            LinkButton(
-                label: "espanso.org",
-                systemImage: "arrow.up.right.square",
-                url: URL(string: "https://espanso.org")!
-            )
+        VStack(spacing: 16) {
+            HStack(spacing: 16) {
+                LinkButton(
+                    label: "Website",
+                    systemImage: "globe",
+                    url: URL(string: "https://jeffcaldwellca.github.io/macspanso/")!
+                )
+                LinkButton(
+                    label: "GitHub",
+                    systemImage: "arrow.up.right.square",
+                    url: URL(string: "https://github.com/jeffcaldwellca/macspanso")!
+                )
+                LinkButton(
+                    label: "espanso.org",
+                    systemImage: "arrow.up.right.square",
+                    url: URL(string: "https://espanso.org")!
+                )
+            }
+
+            if store != nil && processManager != nil {
+                Button {
+                    showDiagnostics = true
+                } label: {
+                    Label("Diagnostics", systemImage: "stethoscope")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(.top, 24)
     }

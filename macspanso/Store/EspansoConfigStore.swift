@@ -154,7 +154,32 @@ final class EspansoConfigStore: ObservableObject {
 
     private func handleExternalChange(at url: URL) {
         guard writingPaths[url.path] == nil else { return }
-        externallyChangedURL = url
+        if url == matchDirectory {
+            handleDirectoryChange()
+        } else {
+            externallyChangedURL = url
+        }
+    }
+
+    /// Called when the match directory itself changes (file added or removed externally).
+    /// Silently syncs matchFiles with what's on disk without prompting the user.
+    private func handleDirectoryChange() {
+        let urls = Set(scanMatchDirectory())
+        let existingURLs = Set(matchFiles.map { $0.url })
+
+        // Add newly discovered files
+        let added = urls.subtracting(existingURLs)
+        for url in added.sorted(by: { $0.path < $1.path }) {
+            let file = loadFile(at: url)
+            matchFiles.append(file)
+            watcher.watch(url: url)
+        }
+
+        // Remove files that no longer exist on disk
+        matchFiles.removeAll { !urls.contains($0.url) }
+
+        // Re-sort to keep consistent ordering
+        matchFiles.sort { $0.url.path < $1.url.path }
     }
 
     /// Called when the user chooses "Reload" in the external edit banner.
