@@ -11,14 +11,18 @@ final class MatchManagerWindowController: NSWindowController {
         self.processManager = processManager
 
         let panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 860, height: 640),
+            contentRect: NSRect(x: 0, y: 0, width: 1200, height: 820),
             styleMask: [.titled, .closable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
         panel.title = "macspanso"
         panel.minSize = NSSize(width: 640, height: 520)
-        panel.center()
+        let autosaveName: NSWindow.FrameAutosaveName = "MatchManagerWindow"
+        if !panel.setFrameUsingName(autosaveName) {
+            panel.center()
+        }
+        panel.setFrameAutosaveName(autosaveName)
         panel.isReleasedWhenClosed = false
 
         // Use NSHostingController (not NSHostingView) so SwiftUI gets full responder-chain
