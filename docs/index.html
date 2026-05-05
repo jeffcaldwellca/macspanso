@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0d1117" media="(prefers-color-scheme: dark)" />
 
   <!-- Primary SEO -->
   <title>macspanso — Native espanso GUI for macOS</title>
@@ -20,13 +23,17 @@
   <meta property="og:url" content="https://jeffcaldwellca.github.io/macspanso/" />
   <meta property="og:title" content="macspanso — Native espanso GUI for macOS" />
   <meta property="og:description" content="A free, open-source macOS menu bar app for managing espanso text expansion matches — no YAML editing required." />
-  <meta property="og:image" content="https://jeffcaldwellca.github.io/macspanso/logo.png" />
+  <!-- TODO: replace og-image.png with a 1200x630 social card (logo + screenshot + tagline). Falls back to logo until then. -->
+  <meta property="og:image" content="https://jeffcaldwellca.github.io/macspanso/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="macspanso — native macOS GUI for managing espanso matches" />
 
   <!-- Twitter / X Card -->
-  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="macspanso — Native espanso GUI for macOS" />
   <meta name="twitter:description" content="A free, open-source macOS menu bar app for managing espanso text expansion matches — no YAML editing required." />
-  <meta name="twitter:image" content="https://jeffcaldwellca.github.io/macspanso/logo.png" />
+  <meta name="twitter:image" content="https://jeffcaldwellca.github.io/macspanso/og-image.png" />
 
   <!-- JSON-LD structured data -->
   <script type="application/ld+json">
@@ -34,43 +41,106 @@
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "macspanso",
+    "softwareVersion": "1.3.0",
     "operatingSystem": "macOS 13+",
     "applicationCategory": "UtilitiesApplication",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
     "url": "https://jeffcaldwellca.github.io/macspanso/",
     "downloadUrl": "https://github.com/jeffcaldwellca/macspanso/releases/latest",
     "license": "https://opensource.org/licenses/MIT",
+    "screenshot": "https://jeffcaldwellca.github.io/macspanso/screenshot.png",
     "description": "A native macOS menu bar app for managing espanso text expansion matches — no YAML editing required."
   }
   </script>
 
-  <!-- Bootstrap Icons -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <!-- Inline SVG icon sprite (sourced from bootstrap-icons 1.11.3, MIT) -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+    <symbol id="i-clipboard" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 16 16"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></symbol>
+    <symbol id="i-github" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/></symbol>
+    <symbol id="i-form" viewBox="0 0 16 16"><path d="M7 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5zM2 1a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm0 8a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2zm.854-3.646a.5.5 0 0 1-.708 0l-1-1a.5.5 0 1 1 .708-.708l.646.647 1.646-1.647a.5.5 0 1 1 .708.708zm0 8a.5.5 0 0 1-.708 0l-1-1a.5.5 0 0 1 .708-.708l.646.647 1.646-1.647a.5.5 0 0 1 .708.708zM7 10.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5zm0-5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 8a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5"/></symbol>
+    <symbol id="i-braces" viewBox="0 0 16 16"><path d="M2.114 8.063V7.9c1.005-.102 1.497-.615 1.497-1.6V4.503c0-1.094.39-1.538 1.354-1.538h.273V2h-.376C3.25 2 2.49 2.759 2.49 4.352v1.524c0 1.094-.376 1.456-1.49 1.456v1.299c1.114 0 1.49.362 1.49 1.456v1.524c0 1.593.759 2.352 2.372 2.352h.376v-.964h-.273c-.964 0-1.354-.444-1.354-1.538V9.663c0-.984-.492-1.497-1.497-1.6M13.886 7.9v.163c-1.005.103-1.497.616-1.497 1.6v1.798c0 1.094-.39 1.538-1.354 1.538h-.273v.964h.376c1.613 0 2.372-.759 2.372-2.352v-1.524c0-1.094.376-1.456 1.49-1.456V7.332c-1.114 0-1.49-.362-1.49-1.456V4.352C13.51 2.759 12.75 2 11.138 2h-.376v.964h.273c.964 0 1.354.444 1.354 1.538V6.3c0 .984.492 1.497 1.497 1.6"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M0 3.5A.5.5 0 0 1 .5 3H1c2.202 0 3.827 1.24 4.874 2.418.49.552.865 1.102 1.126 1.532.26-.43.636-.98 1.126-1.532C9.173 4.24 10.798 3 13 3v1c-1.798 0-3.173 1.01-4.126 2.082A9.6 9.6 0 0 0 7.556 8a9.6 9.6 0 0 0 1.317 1.918C9.828 10.99 11.204 12 13 12v1c-2.202 0-3.827-1.24-4.874-2.418A10.6 10.6 0 0 1 7 9.05c-.26.43-.636.98-1.126 1.532C4.827 11.76 3.202 13 1 13H.5a.5.5 0 0 1 0-1H1c1.798 0 3.173-1.01 4.126-2.082A9.6 9.6 0 0 0 6.444 8a9.6 9.6 0 0 0-1.317-1.918C4.172 5.01 2.796 4 1 4H.5a.5.5 0 0 1-.5-.5"/><path d="M13 5.466V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192m0 9v-3.932a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192"/></symbol>
+    <symbol id="i-tree" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M6 3.5A1.5 1.5 0 0 1 7.5 2h1A1.5 1.5 0 0 1 10 3.5v1A1.5 1.5 0 0 1 8.5 6v1H14a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0v-1A.5.5 0 0 1 2 7h5.5V6A1.5 1.5 0 0 1 6 4.5zM8.5 5a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5zM0 11.5A1.5 1.5 0 0 1 1.5 10h1A1.5 1.5 0 0 1 4 11.5v1A1.5 1.5 0 0 1 2.5 14h-1A1.5 1.5 0 0 1 0 12.5zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm4.5.5A1.5 1.5 0 0 1 7.5 10h1a1.5 1.5 0 0 1 1.5 1.5v1A1.5 1.5 0 0 1 8.5 14h-1A1.5 1.5 0 0 1 6 12.5zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm4.5.5a1.5 1.5 0 0 1 1.5-1.5h1a1.5 1.5 0 0 1 1.5 1.5v1a1.5 1.5 0 0 1-1.5 1.5h-1a1.5 1.5 0 0 1-1.5-1.5zm1.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 16 16"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 16 16"><path d="M0 1.5A1.5 1.5 0 0 1 1.5 0h2A1.5 1.5 0 0 1 5 1.5v2A1.5 1.5 0 0 1 3.5 5h-2A1.5 1.5 0 0 1 0 3.5zM1.5 1a.5.5 0 0 0-.5.5v2a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 0-.5-.5zM0 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm1 3v2a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2zm14-1V8a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v2zM2 8.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0 4a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5"/></symbol>
+    <symbol id="i-search" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/></symbol>
+    <symbol id="i-apple" viewBox="0 0 16 16"><path d="M11.182.008C11.148-.03 9.923.023 8.857 1.18c-1.066 1.156-.902 2.482-.878 2.516s1.52.087 2.475-1.258.762-2.391.728-2.43m3.314 11.733c-.048-.096-2.325-1.234-2.113-3.422s1.675-2.789 1.698-2.854-.597-.79-1.254-1.157a3.7 3.7 0 0 0-1.563-.434c-.108-.003-.483-.095-1.254.116-.508.139-1.653.589-1.968.607-.316.018-1.256-.522-2.267-.665-.647-.125-1.333.131-1.824.328-.49.196-1.422.754-2.074 2.237-.652 1.482-.311 3.83-.067 4.56s.625 1.924 1.273 2.796c.576.984 1.34 1.667 1.659 1.899s1.219.386 1.843.067c.502-.308 1.408-.485 1.766-.472.357.013 1.061.154 1.782.539.571.197 1.111.115 1.652-.105.541-.221 1.324-1.059 2.238-2.758q.52-1.185.473-1.282"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 16 16"><path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z"/></symbol>
+    <symbol id="i-download" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/></symbol>
+    <symbol id="i-star" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></symbol>
+  </svg>
 
   <style>
+    /* Light theme (default) */
     :root {
-      --bg: #0d1117;
-      --surface: #161b22;
-      --border: #30363d;
-      --accent: #2f81f7;
-      --accent-dim: #1a4a8a;
-      --text: #e6edf3;
-      --muted: #8b949e;
-      --green: #3fb950;
+      --bg: #ffffff;
+      --surface: #f6f8fa;
+      --surface-2: #ffffff;
+      --border: #d0d7de;
+      --border-strong: #afb8c1;
+      --accent: #0969da;
+      --accent-hover: #0a5fbd;
+      --text: #1f2328;
+      --muted: #59636e;
+      --green: #1a7f37;
+      --green-bg: #dafbe1;
+      --shadow: 0 8px 24px rgba(140, 149, 159, 0.2);
       --radius: 12px;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* Dark theme */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --surface: #161b22;
+        --surface-2: #1c2128;
+        --border: #30363d;
+        --border-strong: #484f58;
+        --accent: #2f81f7;
+        --accent-hover: #4493f8;
+        --text: #e6edf3;
+        --muted: #8b949e;
+        --green: #3fb950;
+        --green-bg: rgba(63, 185, 80, 0.15);
+        --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    html { color-scheme: light dark; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
 
     a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
+
+    .icon {
+      width: 1em;
+      height: 1em;
+      vertical-align: -0.15em;
+      fill: currentColor;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
 
     /* ── Hero ── */
     .hero {
@@ -78,33 +148,34 @@
       flex-direction: column;
       align-items: center;
       text-align: center;
-      padding: 80px 24px 60px;
+      padding: 72px 24px 48px;
       gap: 20px;
     }
 
-    .hero img {
+    .hero-logo {
       width: 96px;
       height: 96px;
       border-radius: 22px;
-      background: #ffffff;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-    }
-
-    .hero-brew {
-      max-width: 520px;
-      width: 100%;
+      box-shadow: var(--shadow);
     }
 
     .hero h1 {
-      font-size: 2.8rem;
+      font-size: clamp(2.1rem, 6vw, 2.8rem);
       font-weight: 700;
       letter-spacing: -0.5px;
+      margin: 0;
     }
 
-    .hero p {
-      font-size: 1.15rem;
+    .hero-tag {
+      font-size: clamp(1rem, 2.5vw, 1.15rem);
       color: var(--muted);
-      max-width: 520px;
+      max-width: 560px;
+      margin: 0;
+    }
+
+    .hero-tag strong {
+      color: var(--text);
+      font-weight: 600;
     }
 
     .badges {
@@ -112,46 +183,94 @@
       gap: 8px;
       flex-wrap: wrap;
       justify-content: center;
+      align-items: center;
     }
 
     .badges img { height: 20px; }
+
+    .hero-brew {
+      max-width: 560px;
+      width: 100%;
+    }
 
     .cta-group {
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
       justify-content: center;
-      margin-top: 8px;
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 12px 24px;
+      padding: 11px 22px;
       border-radius: 8px;
       font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
-      transition: opacity 0.15s;
+      transition: background 0.15s, border-color 0.15s, transform 0.05s;
+      border: 1px solid transparent;
+      white-space: nowrap;
     }
-    .btn:hover { opacity: 0.85; text-decoration: none; }
+    .btn:hover { text-decoration: none; }
+    .btn:active { transform: translateY(1px); }
 
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border-color: var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--border-strong); background: var(--surface-2); }
+
+    .hero-note {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin: -4px 0 0;
+    }
+
+    /* ── Hero screenshot ── */
+    .hero-shot {
+      width: 100%;
+      max-width: 960px;
+      margin: 16px auto 0;
+      padding: 0 24px;
+    }
+
+    .hero-shot img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
 
     /* ── Sections ── */
     .section {
-      max-width: 900px;
+      max-width: 960px;
       margin: 0 auto;
-      padding: 48px 24px;
+      padding: 56px 24px;
     }
 
     .section h2 {
-      font-size: 1.6rem;
+      font-size: clamp(1.4rem, 3vw, 1.8rem);
       font-weight: 700;
-      margin-bottom: 32px;
+      margin: 0 0 8px;
       text-align: center;
+    }
+
+    .section-lead {
+      text-align: center;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto 32px;
     }
 
     /* ── Features ── */
@@ -173,24 +292,32 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 24px;
+      padding: 22px;
+      transition: border-color 0.15s, transform 0.15s;
     }
 
-    .feature-card .icon {
-      font-size: 1.5rem;
+    .feature-card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-1px);
+    }
+
+    .feature-card .feature-icon {
+      font-size: 1.4rem;
       margin-bottom: 10px;
       color: var(--accent);
+      display: inline-flex;
     }
 
     .feature-card h3 {
       font-size: 1rem;
       font-weight: 600;
-      margin-bottom: 6px;
+      margin: 0 0 6px;
     }
 
     .feature-card p {
       font-size: 0.875rem;
       color: var(--muted);
+      margin: 0;
     }
 
     /* ── Install ── */
@@ -198,26 +325,30 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 32px;
+      padding: 28px;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 22px;
     }
 
     .install-option h3 {
       font-size: 1rem;
       font-weight: 600;
-      margin-bottom: 10px;
+      margin: 0 0 10px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
+    .install-option p {
+      margin: 0;
+    }
+
     .tag {
       font-size: 0.7rem;
       font-weight: 600;
-      background: var(--green);
-      color: #000;
+      background: var(--green-bg);
+      color: var(--green);
       padding: 2px 8px;
       border-radius: 99px;
     }
@@ -226,8 +357,8 @@
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 14px 18px;
-      font-family: "SF Mono", "Fira Code", monospace;
+      padding: 12px 16px;
+      font-family: "SF Mono", "JetBrains Mono", "Fira Code", monospace;
       font-size: 0.875rem;
       color: var(--text);
       overflow-x: auto;
@@ -235,6 +366,14 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .code-block:hover { border-color: var(--border-strong); }
+    .code-block code {
+      background: transparent;
+      padding: 0;
+      white-space: nowrap;
     }
 
     .copy-btn {
@@ -248,16 +387,34 @@
       line-height: 1;
       transition: color 0.15s, border-color 0.15s;
       flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      pointer-events: none; /* code-block handles the click */
     }
-    .copy-btn:hover { color: var(--text); border-color: var(--muted); }
+    .code-block:hover .copy-btn { color: var(--text); border-color: var(--border-strong); }
     .copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+    .install-meta {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .install-meta code {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 0.8em;
+    }
 
     .divider {
       border: none;
       border-top: 1px solid var(--border);
+      margin: 0;
     }
 
-    /* ── Requirement pill ── */
+    /* ── Requirement pills ── */
     .req {
       display: inline-flex;
       align-items: center;
@@ -275,87 +432,179 @@
       gap: 10px;
       flex-wrap: wrap;
       justify-content: center;
-      margin-top: -16px;
-      margin-bottom: 32px;
+      margin: -16px 0 28px;
+    }
+
+    /* ── FAQ ── */
+    .faq-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .faq-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .faq-item summary {
+      cursor: pointer;
+      font-weight: 600;
+      padding: 16px 20px;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after {
+      content: "+";
+      font-size: 1.2rem;
+      color: var(--muted);
+      font-weight: 400;
+      transition: transform 0.2s;
+    }
+    .faq-item[open] summary::after { content: "−"; }
+
+    .faq-item .faq-body {
+      padding: 0 20px 18px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .faq-item .faq-body p { margin: 0 0 8px; }
+    .faq-item .faq-body p:last-child { margin: 0; }
+    .faq-item .faq-body code {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 0.85em;
     }
 
     /* ── Footer ── */
     footer {
       border-top: 1px solid var(--border);
       text-align: center;
-      padding: 32px 24px;
+      padding: 32px 24px 40px;
       color: var(--muted);
       font-size: 0.85rem;
     }
 
+    footer .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
     footer a { color: var(--muted); }
     footer a:hover { color: var(--text); }
+
+    footer .footer-meta {
+      font-size: 0.78rem;
+      color: var(--muted);
+      opacity: 0.8;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
   </style>
 </head>
 <body>
 
   <!-- Hero -->
   <section class="hero">
-    <img src="logo.png" alt="macspanso logo" />
+    <img class="hero-logo" src="logo-192.png" srcset="logo-192.png 1x, logo.png 2x" width="96" height="96" alt="" />
     <h1>macspanso</h1>
-    <p>A native macOS menu bar app for managing <a href="https://espanso.org" target="_blank">espanso</a> text expansion matches — no YAML editing required.</p>
+    <p class="hero-tag">
+      Editing <code>match/base.yml</code> shouldn't require a text editor.
+      A native macOS menu bar app for managing
+      <a href="https://espanso.org" target="_blank" rel="noopener noreferrer">espanso</a>
+      text expansions — <strong>no YAML required</strong>.
+    </p>
     <div class="badges">
-      <img src="https://img.shields.io/badge/macOS-13%2B-blue" alt="macOS 13+" />
-      <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License" />
-    </div>
-    <div class="code-block hero-brew">
-      <code>brew install --cask jeffcaldwellca/tap/macspanso</code>
-      <button class="copy-btn" onclick="copyInstall(this)" title="Copy to clipboard"><i class="bi bi-clipboard"></i></button>
-    </div>
-    <div class="cta-group">
-      <a class="btn btn-primary" href="https://github.com/jeffcaldwellca/macspanso">
-        <i class="bi bi-github"></i> View on GitHub
+      <img src="https://img.shields.io/badge/macOS-13%2B-blue" alt="macOS 13 or later" width="84" height="20" />
+      <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license" width="83" height="20" />
+      <a href="https://github.com/jeffcaldwellca/macspanso/stargazers" target="_blank" rel="noopener noreferrer">
+        <img src="https://img.shields.io/github/stars/jeffcaldwellca/macspanso?style=social" alt="GitHub stars" height="20" />
       </a>
     </div>
-    <p style="font-size:0.8rem;color:var(--muted);">Automatically installs espanso if it isn't already present.</p>
+
+    <div class="code-block hero-brew" data-copy>
+      <code>brew install --cask jeffcaldwellca/tap/macspanso</code>
+      <span class="copy-btn" aria-hidden="true"><svg class="icon"><use href="#i-clipboard"/></svg></span>
+    </div>
+
+    <div class="cta-group">
+      <a class="btn btn-primary" href="https://github.com/jeffcaldwellca/macspanso/releases/latest">
+        <svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>
+        Download .dmg
+      </a>
+      <a class="btn btn-secondary" href="https://github.com/jeffcaldwellca/macspanso">
+        <svg class="icon" aria-hidden="true"><use href="#i-github"/></svg>
+        View on GitHub
+      </a>
+    </div>
+    <p class="hero-note">Homebrew automatically installs espanso if it isn't already present.</p>
   </section>
 
+  <!-- Hero screenshot. The wrapper is hidden until docs/screenshot.png exists. -->
+  <!-- TODO: drop a real app screenshot at docs/screenshot.png (recommended ~1600x1000, 2x retina). -->
+  <figure class="hero-shot" id="heroShot" hidden>
+    <img src="screenshot.png" alt="macspanso main window: file tree on the left, list of espanso matches with triggers and replacements on the right" loading="eager" onload="document.getElementById('heroShot').hidden = false" onerror="this.parentElement.remove()" />
+  </figure>
+
   <!-- Features -->
-  <section class="section" style="padding-top: 0;">
+  <section class="section" style="padding-top: 24px;">
     <h2>What it does</h2>
+    <p class="section-lead">A small native app for the parts of espanso you actually touch every day.</p>
     <div class="features">
       <div class="feature-card">
-        <div class="icon"><i class="bi bi-pencil"></i></div>
+        <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-pencil"/></svg></span>
         <h3>Create matches</h3>
         <p>Type a trigger, type the replacement, save. No YAML, no terminal.</p>
       </div>
       <div class="feature-card">
-        <div class="icon"><i class="bi bi-ui-checks"></i></div>
+        <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-form"/></svg></span>
         <h3>Form matches</h3>
         <p>Add <code>[[placeholders]]</code> and espanso will show a fill-in popup before expanding.</p>
       </div>
       <div class="feature-card">
-        <div class="icon"><i class="bi bi-braces"></i></div>
+        <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-braces"/></svg></span>
         <h3>Variables</h3>
         <p>Attach date, shell, clipboard, random, and other variable types to any match.</p>
       </div>
       <div class="feature-card">
-        <div class="icon"><i class="bi bi-shuffle"></i></div>
+        <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-shuffle"/></svg></span>
         <h3>Multi-trigger &amp; regex</h3>
         <p>One match, many triggers — or match by regular expression for maximum flexibility.</p>
       </div>
       <div class="feature-card">
-        <div class="icon"><i class="bi bi-diagram-3"></i></div>
+        <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-tree"/></svg></span>
         <h3>File tree view</h3>
         <p>Browse matches by YAML file or as a flat list. See exactly where each match lives.</p>
       </div>
       <div class="feature-card">
-        <div class="icon"><i class="bi bi-eye"></i></div>
+        <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-eye"/></svg></span>
         <h3>External edit detection</h3>
         <p>A banner appears when a file changes outside the app, with reload or keep options.</p>
       </div>
       <div class="feature-card">
-        <div class="icon"><i class="bi bi-menu-app"></i></div>
+        <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-menu"/></svg></span>
         <h3>Menu bar controls</h3>
         <p>Enable, disable, or restart espanso without leaving the keyboard.</p>
       </div>
       <div class="feature-card">
-        <div class="icon"><i class="bi bi-search"></i></div>
+        <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg></span>
         <h3>Search</h3>
         <p>Filter matches instantly by trigger, replacement preview, or label.</p>
       </div>
@@ -363,52 +612,130 @@
   </section>
 
   <!-- Install -->
-  <section class="section" style="padding-top: 0;">
+  <section class="section" id="install" style="padding-top: 0;">
     <h2>Installation</h2>
+    <p class="section-lead">Currently on <strong>v1.3.0</strong> — see the <a href="https://github.com/jeffcaldwellca/macspanso/blob/main/CHANGELOG.md">changelog</a> for what's new.</p>
 
     <div class="reqs">
-      <span class="req"><i class="bi bi-apple"></i> macOS 13 Ventura or later</span>
-      <span class="req"><i class="bi bi-lightning-charge-fill"></i> espanso (auto-installed via Homebrew)</span>
+      <span class="req"><svg class="icon" aria-hidden="true"><use href="#i-apple"/></svg> macOS 13 Ventura or later</span>
+      <span class="req"><svg class="icon" aria-hidden="true"><use href="#i-bolt"/></svg> espanso (auto-installed via Homebrew)</span>
     </div>
 
     <div class="install-block">
       <div class="install-option">
         <h3>Homebrew <span class="tag">recommended</span></h3>
-        <div class="code-block">
+        <div class="code-block" data-copy>
           <code>brew install --cask jeffcaldwellca/tap/macspanso</code>
-          <button class="copy-btn" onclick="copyInstall(this)" title="Copy to clipboard"><i class="bi bi-clipboard"></i></button>
+          <span class="copy-btn" aria-hidden="true"><svg class="icon"><use href="#i-clipboard"/></svg></span>
         </div>
-        <p style="font-size:0.8rem;color:var(--muted);margin-top:8px;">Automatically installs espanso as a dependency if it isn't already present.</p>
+        <p class="install-meta">Installs espanso as a dependency if it isn't already present. Don't have Homebrew? <a href="https://brew.sh" target="_blank" rel="noopener noreferrer">Install it first</a>.</p>
       </div>
       <hr class="divider" />
       <div class="install-option">
         <h3>Direct download</h3>
-        <p style="font-size:0.875rem;color:var(--muted);">Download the latest <code>.dmg</code> from the <a href="https://github.com/jeffcaldwellca/macspanso/releases/latest">Releases page</a>, open it, and drag macspanso to your Applications folder.</p>
+        <p>Download the latest <code>.dmg</code> from the <a href="https://github.com/jeffcaldwellca/macspanso/releases/latest">Releases page</a>, open it, and drag macspanso to your Applications folder.</p>
+        <p class="install-meta">You'll need to install <a href="https://espanso.org/install/mac/" target="_blank" rel="noopener noreferrer">espanso</a> separately.</p>
       </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section" style="padding-top: 0;">
+    <h2>Frequently asked</h2>
+    <div class="faq-list">
+      <details class="faq-item">
+        <summary>Where are my matches stored?</summary>
+        <div class="faq-body">
+          <p>macspanso edits the same YAML files espanso reads — typically <code>~/Library/Application Support/espanso/match/</code>. Nothing is moved, copied, or duplicated; we just give you a nicer way to edit those files.</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary>Will macspanso conflict with editing config files directly?</summary>
+        <div class="faq-body">
+          <p>No. macspanso watches the espanso config directory and detects external edits. If a file changes while macspanso has it open, a banner gives you the choice to reload from disk or keep your in-app changes.</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary>Does it work with espanso's iCloud / Dropbox sync?</summary>
+        <div class="faq-body">
+          <p>Yes — macspanso operates on whatever path espanso is configured to use. If you've moved your match folder into iCloud Drive or another sync provider, macspanso will edit the synced files in place.</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary>Does macspanso send anything over the network?</summary>
+        <div class="faq-body">
+          <p>No. The app reads and writes local YAML files and controls the local <code>espanso</code> process. There is no telemetry, no analytics, and no network calls.</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary>How do I uninstall it?</summary>
+        <div class="faq-body">
+          <p>If you installed via Homebrew: <code>brew uninstall --cask jeffcaldwellca/tap/macspanso</code>.</p>
+          <p>If you installed via .dmg: drag macspanso from <code>/Applications</code> to the Trash. Your espanso matches are not affected — they live in espanso's config directory and stay put.</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary>Is it open source?</summary>
+        <div class="faq-body">
+          <p>Yes — MIT licensed. <a href="https://github.com/jeffcaldwellca/macspanso">View the source on GitHub</a>, file an issue, or open a PR.</p>
+        </div>
+      </details>
     </div>
   </section>
 
   <!-- Footer -->
   <footer>
-    <p>
-      macspanso is open source &amp; MIT licensed.
-      <a href="https://github.com/jeffcaldwellca/macspanso" target="_blank">github.com/jeffcaldwellca/macspanso</a>
-    </p>
+    <div class="footer-links">
+      <a href="https://github.com/jeffcaldwellca/macspanso" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a href="https://github.com/jeffcaldwellca/macspanso/releases">Releases</a>
+      <a href="https://github.com/jeffcaldwellca/macspanso/blob/main/CHANGELOG.md">Changelog</a>
+      <a href="https://github.com/jeffcaldwellca/macspanso/issues">Issues</a>
+      <a href="https://github.com/jeffcaldwellca/macspanso/blob/main/LICENSE">License</a>
+    </div>
+    <div class="footer-meta">macspanso v1.3.0 · MIT licensed · Made for the espanso community.</div>
   </footer>
 
+  <!-- Live region for copy-success announcements -->
+  <div id="srAnnounce" class="visually-hidden" role="status" aria-live="polite"></div>
+
   <script>
-    function copyInstall(btn) {
-      const text = btn.parentElement.querySelector('code').textContent;
-      navigator.clipboard.writeText(text).then(() => {
-        const icon = btn.querySelector('i');
-        icon.className = 'bi bi-check-lg';
-        btn.classList.add('copied');
-        setTimeout(() => {
-          icon.className = 'bi bi-clipboard';
-          btn.classList.remove('copied');
-        }, 2000);
+    (function () {
+      const announce = document.getElementById('srAnnounce');
+
+      function copyFromBlock(block) {
+        const code = block.querySelector('code');
+        const btn = block.querySelector('.copy-btn');
+        if (!code || !btn) return;
+
+        navigator.clipboard.writeText(code.textContent.trim()).then(() => {
+          const use = btn.querySelector('use');
+          use.setAttribute('href', '#i-check');
+          btn.classList.add('copied');
+          announce.textContent = 'Install command copied to clipboard';
+          setTimeout(() => {
+            use.setAttribute('href', '#i-clipboard');
+            btn.classList.remove('copied');
+            announce.textContent = '';
+          }, 2000);
+        }).catch(() => {
+          announce.textContent = 'Copy failed — please copy manually';
+        });
+      }
+
+      document.querySelectorAll('.code-block[data-copy]').forEach(block => {
+        block.setAttribute('role', 'button');
+        block.setAttribute('tabindex', '0');
+        block.setAttribute('aria-label', 'Copy install command to clipboard');
+
+        block.addEventListener('click', () => copyFromBlock(block));
+        block.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            copyFromBlock(block);
+          }
+        });
       });
-    }
+    })();
   </script>
 
 </body>

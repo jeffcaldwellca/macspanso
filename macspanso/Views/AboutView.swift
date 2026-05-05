@@ -7,6 +7,7 @@ struct AboutView: View {
     var processManager: EspansoProcessManager? = nil
 
     @State private var showDiagnostics = false
+    @State private var showLogViewer = false
 
     private var version: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
@@ -40,6 +41,11 @@ struct AboutView: View {
         .sheet(isPresented: $showDiagnostics) {
             if let s = store, let p = processManager {
                 DiagnosticsView(store: s, processManager: p)
+            }
+        }
+        .sheet(isPresented: $showLogViewer) {
+            if let p = processManager {
+                LogViewer(processManager: p)
             }
         }
     }
@@ -144,14 +150,25 @@ struct AboutView: View {
             }
 
             if store != nil && processManager != nil {
-                Button {
-                    showDiagnostics = true
-                } label: {
-                    Label("Diagnostics", systemImage: "stethoscope")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                HStack(spacing: 16) {
+                    Button {
+                        showDiagnostics = true
+                    } label: {
+                        Label("Diagnostics", systemImage: "stethoscope")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        showLogViewer = true
+                    } label: {
+                        Label("View Logs", systemImage: "doc.text.magnifyingglass")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
         }
         .padding(.top, 24)

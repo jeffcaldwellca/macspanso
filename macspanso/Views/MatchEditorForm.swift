@@ -1,5 +1,6 @@
 // macspanso/Views/MatchEditorForm.swift
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct MatchEditorForm: View {
     let initialMatch: EspansoMatch
@@ -16,6 +17,10 @@ struct MatchEditorForm: View {
     @State private var showUnsavedAlert: Bool = false
     @State private var triggerEntryIDs: [UUID] = []
     @State private var savedTriggers: [String]? = nil
+    @State private var destinationURL: URL? = nil
+    @State private var regexTestInput: String = ""
+
+    private static let lastDestinationKey = "macspanso.lastDestinationFilePath"
 
     init(
         match: EspansoMatch,
@@ -62,6 +67,7 @@ struct MatchEditorForm: View {
             // Form body
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
+                    if isNew { destinationSection }
                     triggerSection
                     replacementSection
                     if !isFormMatch {
@@ -116,6 +122,79 @@ struct MatchEditorForm: View {
 
     // MARK: - Sections
 
+    private var destinationSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Save to", systemImage: "folder")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+
+            HStack(spacing: 8) {
+                Picker("", selection: destinationBinding) {
+                    ForEach(store.writableFiles, id: \.url) { file in
+                        Text(file.displayName).tag(Optional(file.url))
+                    }
+                    if store.writableFiles.isEmpty {
+                        Text("base.yml").tag(Optional(defaultDestination))
+                    }
+                }
+                .labelsHidden()
+
+                Button {
+                    promptForNewFile()
+                } label: {
+                    Label("New File…", systemImage: "doc.badge.plus")
+                        .labelStyle(.titleAndIcon)
+                        .font(.caption)
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+        .onAppear { hydrateDestination() }
+    }
+
+    private var defaultDestination: URL {
+        store.matchDirectory.appendingPathComponent("base.yml")
+    }
+
+    private var destinationBinding: Binding<URL?> {
+        Binding(
+            get: { destinationURL ?? defaultDestination },
+            set: { destinationURL = $0 }
+        )
+    }
+
+    private func hydrateDestination() {
+        guard destinationURL == nil else { return }
+        let defaults = UserDefaults.standard
+        if let path = defaults.string(forKey: Self.lastDestinationKey) {
+            let candidate = URL(fileURLWithPath: path)
+            if store.writableFiles.contains(where: { $0.url == candidate }) {
+                destinationURL = candidate
+                return
+            }
+        }
+        if let base = store.writableFiles.first(where: { $0.displayName == "base.yml" }) {
+            destinationURL = base.url
+        } else {
+            destinationURL = store.writableFiles.first?.url ?? defaultDestination
+        }
+    }
+
+    private func promptForNewFile() {
+        let panel = NSSavePanel()
+        panel.directoryURL = store.matchDirectory
+        panel.allowedContentTypes = [.yaml]
+        panel.nameFieldStringValue = "untitled.yml"
+        panel.message = "Create a new espanso match file"
+        if panel.runModal() == .OK, let url = panel.url {
+            // Coerce the extension; espanso requires .yml.
+            let coerced = url.pathExtension == "yml" ? url : url.deletingPathExtension().appendingPathExtension("yml")
+            destinationURL = coerced
+        }
+    }
+
     private var triggerSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Label("Trigger", systemImage: "keyboard")
@@ -154,10 +233,32 @@ struct MatchEditorForm: View {
                 }
             }
 
-            // Alternate triggers (multi-trigger)
+            // Alternate triggers (multi-trigger). Up/down arrows reorder; the first
+            // trigger is the "primary" and renders in the main field above.
             if !useRegex {
+                let triggerCount = draft.triggers?.count ?? 0
                 ForEach(Array(zip(triggerEntryIDs, (draft.triggers ?? []).indices)), id: \.0) { _, i in
-                    HStack {
+                    HStack(spacing: 4) {
+                        Button {
+                            moveTrigger(from: i, to: i - 1)
+                        } label: {
+                            Image(systemName: "chevron.up")
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.secondary)
+                        .disabled(i == 0)
+                        .help("Move up")
+
+                        Button {
+                            moveTrigger(from: i, to: i + 1)
+                        } label: {
+                            Image(systemName: "chevron.down")
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.secondary)
+                        .disabled(i == triggerCount - 1)
+                        .help("Move down")
+
                         TextField("Alternate trigger…", text: Binding(
                             get: { draft.triggers?[i] ?? "" },
                             set: { if i < (draft.triggers?.count ?? 0) { draft.triggers?[i] = $0 } }
@@ -201,6 +302,56 @@ struct MatchEditorForm: View {
 
             validationLabel(for: .emptyTrigger, message: "Trigger is required")
             validationLabel(for: .duplicateTrigger, message: "This trigger already exists")
+
+            if useRegex { regexTesterSection }
+        }
+    }
+
+    private var regexTesterSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Test input")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+
+            TextField("Type something the pattern should match…", text: $regexTestInput)
+                .textFieldStyle(.roundedBorder)
+                .font(.system(.body, design: .monospaced))
+
+            regexTestResult
+        }
+        .padding(.top, 4)
+    }
+
+    @ViewBuilder
+    private var regexTestResult: some View {
+        let pattern = draft.regex ?? ""
+        if pattern.isEmpty || regexTestInput.isEmpty {
+            EmptyView()
+        } else if let regex = try? NSRegularExpression(pattern: pattern) {
+            let range = NSRange(regexTestInput.startIndex..., in: regexTestInput)
+            let matches = regex.matches(in: regexTestInput, range: range)
+            if matches.isEmpty {
+                Label("No match", systemImage: "xmark.circle")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                Label("\(matches.count) match\(matches.count == 1 ? "" : "es")",
+                      systemImage: "checkmark.circle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.green)
+                ForEach(Array(matches.enumerated()), id: \.offset) { idx, m in
+                    if let r = Range(m.range, in: regexTestInput) {
+                        Text("[\(idx)] \(String(regexTestInput[r]))")
+                            .font(.system(.caption, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        } else {
+            Label("Invalid regex pattern", systemImage: "exclamationmark.triangle")
+                .font(.caption)
+                .foregroundStyle(.orange)
         }
     }
 
@@ -258,6 +409,45 @@ struct MatchEditorForm: View {
                         .foregroundStyle(.orange)
                 }
             }
+
+            previewSection
+        }
+    }
+
+    private var previewSection: some View {
+        let preview = MatchExpander.preview(of: draft)
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 4) {
+                Image(systemName: "eye")
+                Text("Preview")
+            }
+            .font(.caption)
+            .fontWeight(.semibold)
+            .foregroundStyle(.secondary)
+            .textCase(.uppercase)
+
+            Text(preview.isEmpty ? "—" : preview)
+                .font(.system(.body, design: .monospaced))
+                .foregroundStyle(preview.isEmpty ? .tertiary : .primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(8)
+                .background(Color(nsColor: .controlBackgroundColor))
+                .clipShape(RoundedRectangle(cornerRadius: 5))
+                .textSelection(.enabled)
+
+            if previewHasUnexecutedVars {
+                Label("Shell, script, and random values are placeholders in preview.",
+                      systemImage: "info.circle")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.top, 4)
+    }
+
+    private var previewHasUnexecutedVars: Bool {
+        (draft.vars ?? []).contains { v in
+            v.type == .shell || v.type == .script || v.type == .random
         }
     }
 
@@ -281,6 +471,15 @@ struct MatchEditorForm: View {
     }
 
     // MARK: - Helpers
+
+    private func moveTrigger(from source: Int, to destination: Int) {
+        guard var triggers = draft.triggers else { return }
+        guard triggers.indices.contains(source), triggers.indices.contains(destination)
+        else { return }
+        triggers.swapAt(source, destination)
+        draft.triggers = triggers
+        triggerEntryIDs.swapAt(source, destination)
+    }
 
     private var triggerBinding: Binding<String> {
         Binding(
@@ -338,7 +537,9 @@ struct MatchEditorForm: View {
         }
         do {
             if isNew {
-                try store.add(matchToSave)
+                let target = destinationURL ?? defaultDestination
+                try store.add(matchToSave, to: target)
+                UserDefaults.standard.set(target.path, forKey: Self.lastDestinationKey)
             } else {
                 try store.update(matchToSave)
             }

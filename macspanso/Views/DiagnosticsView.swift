@@ -130,6 +130,22 @@ struct DiagnosticsView: View {
         }
         lines += section("Directory Contents  (● = .yml, ○ = other)", dirListLines)
 
+        // Cross-file trigger conflicts
+        let conflicts = await MainActor.run { store.triggerConflicts() }
+        if conflicts.isEmpty {
+            lines += section("Trigger Conflicts", ["(none)"])
+        } else {
+            var conflictLines: [String] = []
+            for c in conflicts {
+                conflictLines.append("⚠ \(c.trigger)")
+                for occ in c.occurrences {
+                    let rel = occ.fileURL.path.replacingOccurrences(of: store.matchDirectory.path + "/", with: "")
+                    conflictLines.append("    \(rel)")
+                }
+            }
+            lines += section("Trigger Conflicts (\(conflicts.count))", conflictLines)
+        }
+
         // Loaded files
         let matchFiles = await MainActor.run { store.matchFiles }
         if matchFiles.isEmpty {

@@ -8,11 +8,18 @@ struct MatchManagerView: View {
     @ObservedObject var processManager: EspansoProcessManager
 
     @State private var selectedTab: AppTab = .matches
-    @State private var selectedMatchID: UUID? = nil
+    @State private var selectedMatchIDs: Set<UUID> = []
     @State private var isCreatingNew: Bool = false
     @State private var editorGeneration: Int = 0
     @State private var showFileTree: Bool = false
     @State private var searchText: String = ""
+    @State private var showQuickSwitcher: Bool = false
+
+    /// When the user has exactly one match selected, the editor shows it. Multi-selection
+    /// shows a bulk-action panel instead — see `editorPanel`.
+    private var singleSelectedMatchID: UUID? {
+        selectedMatchIDs.count == 1 ? selectedMatchIDs.first : nil
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -22,11 +29,24 @@ struct MatchManagerView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .focusNewMatch)) { _ in
             selectedTab = .matches
-            selectedMatchID = nil
+            selectedMatchIDs = []
             isCreatingNew = true
         }
         .onReceive(NotificationCenter.default.publisher(for: .focusAbout)) { _ in
             selectedTab = .about
+        }
+        .background(
+            Button("Quick Switcher") { showQuickSwitcher = true }
+                .keyboardShortcut("p", modifiers: .command)
+                .opacity(0)
+                .frame(width: 0, height: 0)
+        )
+        .sheet(isPresented: $showQuickSwitcher) {
+            QuickSwitcherView(store: store, isPresented: $showQuickSwitcher) { id in
+                selectedTab = .matches
+                isCreatingNew = false
+                selectedMatchIDs = [id]
+            }
         }
     }
 
@@ -70,7 +90,7 @@ struct MatchManagerView: View {
             HSplitView {
                 MatchListView(
                     store: store,
-                    selectedMatchID: $selectedMatchID,
+                    selectedMatchIDs: $selectedMatchIDs,
                     isCreatingNew: $isCreatingNew,
                     showFileTree: $showFileTree,
                     searchText: $searchText
@@ -98,14 +118,19 @@ struct MatchManagerView: View {
 
     @ViewBuilder
     private var editorPanel: some View {
-        if let id = selectedMatchID,
+        if selectedMatchIDs.count > 1 {
+            BulkActionPanel(
+                store: store,
+                selectedIDs: $selectedMatchIDs
+            )
+        } else if let id = singleSelectedMatchID,
            let match = store.allMatches.first(where: { $0.id == id }),
            let file = store.file(containing: id) {
             MatchEditorForm(
                 match: match,
                 sourceFile: file,
                 store: store,
-                onSave: { selectedMatchID = $0.id; editorGeneration += 1 },
+                onSave: { selectedMatchIDs = [$0.id]; editorGeneration += 1 },
                 onCancel: {}
             )
             // Increment editorGeneration on save so SwiftUI re-inits the form,
@@ -116,10 +141,14 @@ struct MatchManagerView: View {
                 match: EspansoMatch(),
                 sourceFile: nil,
                 store: store,
-                onSave: { selectedMatchID = $0.id; isCreatingNew = false },
+                onSave: { selectedMatchIDs = [$0.id]; isCreatingNew = false },
                 onCancel: { isCreatingNew = false }
             )
             .id("new")  // force re-init when triggered from menu bar
+        } else if store.allMatches.isEmpty {
+            EmptyStateView(store: store) { newMatchID in
+                selectedMatchIDs = [newMatchID]
+            }
         } else {
             // Empty state — nothing selected
             VStack {
@@ -128,6 +157,211 @@ struct MatchManagerView: View {
                     .foregroundStyle(.tertiary)
                 Spacer()
             }
+        }
+    }
+}
+
+private struct BulkActionPanel: View {
+    @ObservedObject var store: EspansoConfigStore
+    @Binding var selectedIDs: Set<UUID>
+    @State private var actionError: String?
+
+    private var selectedMatches: [EspansoMatch] {
+        store.allMatches.filter { selectedIDs.contains($0.id) }
+    }
+
+    var body: some View {
+        VStack(spacing: 24) {
+            VStack(spacing: 8) {
+                Image(systemName: "checklist")
+                    .font(.system(size: 36, weight: .light))
+                    .foregroundStyle(.secondary)
+                Text("\(selectedIDs.count) matches selected")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+            }
+
+            HStack(spacing: 12) {
+                Menu {
+                    ForEach(store.writableFiles, id: \.url) { file in
+                        Button(file.displayName) { moveAll(to: file.url) }
+                    }
+                } label: {
+                    Label("Move to…", systemImage: "folder")
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+                .disabled(store.writableFiles.isEmpty)
+
+                Button(role: .destructive) {
+                    deleteAll()
+                } label: {
+                    Label("Delete All", systemImage: "trash")
+                }
+                .buttonStyle(.bordered)
+
+                Button("Clear Selection") {
+                    selectedIDs = []
+                }
+                .buttonStyle(.bordered)
+            }
+
+            if let err = actionError {
+                Text(err).font(.caption).foregroundStyle(.red)
+            }
+
+            Divider().padding(.horizontal, 60)
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(selectedMatches.prefix(50)) { match in
+                        Text(match.primaryTrigger)
+                            .font(.system(.caption, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                    }
+                    if selectedMatches.count > 50 {
+                        Text("…and \(selectedMatches.count - 50) more")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 40)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(40)
+    }
+
+    private func deleteAll() {
+        let ids = selectedIDs
+        var firstError: String?
+        for id in ids {
+            do { try store.delete(matchID: id) }
+            catch { firstError = firstError ?? error.localizedDescription }
+        }
+        selectedIDs = []
+        actionError = firstError
+    }
+
+    private func moveAll(to url: URL) {
+        let ids = selectedIDs
+        var firstError: String?
+        for id in ids {
+            do { try store.move(matchID: id, to: url) }
+            catch { firstError = firstError ?? error.localizedDescription }
+        }
+        actionError = firstError
+    }
+}
+
+private struct EmptyStateView: View {
+    @ObservedObject var store: EspansoConfigStore
+    let onCreated: (UUID) -> Void
+    @State private var creationError: String?
+
+    private struct Example: Identifiable {
+        let id = UUID()
+        let title: String
+        let subtitle: String
+        let symbol: String
+        let make: () -> EspansoMatch
+    }
+
+    private var examples: [Example] {
+        [
+            Example(
+                title: "Email signature",
+                subtitle: "::sig → Best,\\nJeff",
+                symbol: "signature",
+                make: { EspansoMatch(trigger: "::sig", replace: "Best,\nJeff") }
+            ),
+            Example(
+                title: "Current date",
+                subtitle: "::today → 2026-05-05",
+                symbol: "calendar",
+                make: {
+                    EspansoMatch(
+                        trigger: "::today",
+                        replace: "{{d}}",
+                        vars: [EspansoVar(name: "d", type: .date, params: ["format": .string("%Y-%m-%d")])]
+                    )
+                }
+            ),
+            Example(
+                title: "Clipboard paste",
+                subtitle: "::clip → pastes clipboard",
+                symbol: "doc.on.clipboard",
+                make: {
+                    EspansoMatch(
+                        trigger: "::clip",
+                        replace: "{{c}}",
+                        vars: [EspansoVar(name: "c", type: .clipboard)]
+                    )
+                }
+            ),
+        ]
+    }
+
+    var body: some View {
+        VStack(spacing: 24) {
+            VStack(spacing: 8) {
+                Image(systemName: "text.cursor")
+                    .font(.system(size: 48, weight: .light))
+                    .foregroundStyle(Color.accentColor)
+                Text("No matches yet")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                Text("Pick a starter below, or press ⌘N to create your own.")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+
+            HStack(spacing: 12) {
+                ForEach(examples) { example in
+                    Button {
+                        create(example)
+                    } label: {
+                        VStack(spacing: 6) {
+                            Image(systemName: example.symbol)
+                                .font(.system(size: 22))
+                                .foregroundStyle(Color.accentColor)
+                            Text(example.title)
+                                .font(.callout)
+                                .fontWeight(.medium)
+                            Text(example.subtitle)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(width: 140, height: 100)
+                        .padding(8)
+                        .background(Color(nsColor: .controlBackgroundColor))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.secondary.opacity(0.2), lineWidth: 0.5))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            if let err = creationError {
+                Text(err)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(40)
+    }
+
+    private func create(_ example: Example) {
+        let match = example.make()
+        do {
+            try store.add(match)
+            onCreated(match.id)
+        } catch {
+            creationError = error.localizedDescription
         }
     }
 }

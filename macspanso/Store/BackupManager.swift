@@ -52,13 +52,87 @@ final class BackupManager {
         guard let mode = askImportMode() else { return }
 
         do {
+            // Replace is destructive — snapshot first so the user has an undo path
+            // even after the source backup is gone.
             if mode == .replace {
+                try? await createSnapshot()
                 try deleteUserMatchFiles()
             }
             try await unzip(source, to: matchDirectory)
             store?.load()
         } catch {
             showAlert(title: "Import Failed", message: error.localizedDescription)
+        }
+    }
+
+    // MARK: - Snapshots
+
+    private static let maxSnapshots = 10
+
+    static var snapshotsDirectory: URL {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? FileManager.default.homeDirectoryForCurrentUser
+                .appendingPathComponent("Library/Application Support")
+        return appSupport.appendingPathComponent("macspanso/snapshots")
+    }
+
+    struct Snapshot: Identifiable {
+        let url: URL
+        let date: Date
+        var id: String { url.path }
+        var displayName: String {
+            let f = DateFormatter()
+            f.dateStyle = .medium
+            f.timeStyle = .short
+            return f.string(from: date)
+        }
+    }
+
+    func createSnapshot() async throws {
+        let dir = Self.snapshotsDirectory
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let stamp = ISO8601DateFormatter().string(from: Date())
+            .replacingOccurrences(of: ":", with: "-")
+        let url = dir.appendingPathComponent("snapshot-\(stamp).\(Self.backupExtension)")
+        try await zip(matchDirectory: matchDirectory, to: url)
+        Self.pruneOldSnapshots()
+    }
+
+    static func listSnapshots() -> [Snapshot] {
+        let fm = FileManager.default
+        guard let urls = try? fm.contentsOfDirectory(
+            at: snapshotsDirectory,
+            includingPropertiesForKeys: [.contentModificationDateKey]
+        ) else { return [] }
+
+        return urls
+            .filter { $0.pathExtension == backupExtension }
+            .compactMap { url -> Snapshot? in
+                let attrs = try? fm.attributesOfItem(atPath: url.path)
+                let date = (attrs?[.modificationDate] as? Date) ?? Date.distantPast
+                return Snapshot(url: url, date: date)
+            }
+            .sorted { $0.date > $1.date }
+    }
+
+    private static func pruneOldSnapshots() {
+        let snapshots = listSnapshots()
+        guard snapshots.count > maxSnapshots else { return }
+        let stale = snapshots.dropFirst(maxSnapshots)
+        for s in stale {
+            try? FileManager.default.removeItem(at: s.url)
+        }
+    }
+
+    func restoreSnapshot(_ snapshot: Snapshot) async {
+        do {
+            // Snapshot the current state too — restoring is itself destructive.
+            try? await createSnapshot()
+            try deleteUserMatchFiles()
+            try await unzip(snapshot.url, to: matchDirectory)
+            store?.load()
+        } catch {
+            showAlert(title: "Restore Failed", message: error.localizedDescription)
         }
     }
 

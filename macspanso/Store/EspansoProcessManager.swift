@@ -14,14 +14,22 @@ final class EspansoProcessManager: ObservableObject {
 
     @Published var state: DaemonState = .unknown
 
+    /// Non-nil while a snooze is active; the user has temporarily disabled expansion
+    /// and we'll re-enable at this date. Persists across app launches via UserDefaults.
+    @Published private(set) var snoozeUntil: Date?
+
     private var pollTimer: Timer?
+    private var snoozeTimer: Timer?
     let espansoPath: String
+
+    private static let snoozeDefaultsKey = "macspanso.snoozeUntil"
 
     /// Pass a custom `espansoPath` for testing; leave nil to auto-locate via Homebrew / PATH.
     init(espansoPath: String? = nil) {
         let path = espansoPath ?? EspansoProcessManager.locateEspanso() ?? ""
         self.espansoPath = path
         if path.isEmpty { state = .notInstalled }
+        restorePersistedSnooze()
     }
 
     // MARK: - Lifecycle
@@ -68,6 +76,87 @@ final class EspansoProcessManager: ObservableObject {
             default:        break
             }
             await refresh()
+        }
+    }
+
+    // MARK: - Snooze
+
+    enum SnoozeDuration {
+        case minutes(Int)
+        case hours(Int)
+        case untilTomorrow
+
+        var endDate: Date {
+            switch self {
+            case .minutes(let n):
+                return Date().addingTimeInterval(TimeInterval(n) * 60)
+            case .hours(let n):
+                return Date().addingTimeInterval(TimeInterval(n) * 3600)
+            case .untilTomorrow:
+                let cal = Calendar.current
+                let tomorrowStart = cal.startOfDay(for: Date().addingTimeInterval(86400))
+                // Default to 8 AM tomorrow rather than midnight so the user wakes up
+                // with espanso ready, not active overnight.
+                return cal.date(byAdding: .hour, value: 8, to: tomorrowStart) ?? tomorrowStart
+            }
+        }
+
+        var label: String {
+            switch self {
+            case .minutes(let n):  return "\(n) minutes"
+            case .hours(let n):    return n == 1 ? "1 hour" : "\(n) hours"
+            case .untilTomorrow:   return "Until tomorrow"
+            }
+        }
+    }
+
+    func snooze(for duration: SnoozeDuration) {
+        snooze(until: duration.endDate)
+    }
+
+    func snooze(until end: Date) {
+        snoozeUntil = end
+        UserDefaults.standard.set(end, forKey: Self.snoozeDefaultsKey)
+        scheduleSnoozeTimer()
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            if state == .running { await run("cmd", "disable") }
+            await refresh()
+        }
+    }
+
+    func cancelSnooze(reenable: Bool = true) {
+        snoozeUntil = nil
+        UserDefaults.standard.removeObject(forKey: Self.snoozeDefaultsKey)
+        snoozeTimer?.invalidate()
+        snoozeTimer = nil
+        if reenable {
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                if state == .disabled { await run("cmd", "enable") }
+                await refresh()
+            }
+        }
+    }
+
+    private func scheduleSnoozeTimer() {
+        snoozeTimer?.invalidate()
+        guard let end = snoozeUntil else { return }
+        let delay = max(1, end.timeIntervalSinceNow)
+        snoozeTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.cancelSnooze(reenable: true) }
+        }
+    }
+
+    private func restorePersistedSnooze() {
+        guard let stored = UserDefaults.standard.object(forKey: Self.snoozeDefaultsKey) as? Date
+        else { return }
+        if stored > Date() {
+            snoozeUntil = stored
+            scheduleSnoozeTimer()
+        } else {
+            // Snooze elapsed while the app was closed — clear silently.
+            UserDefaults.standard.removeObject(forKey: Self.snoozeDefaultsKey)
         }
     }
 
