@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.5] - 2026-05-06
+
+### Fixed
+- **Match Manager window invisible after display changes** — when docking, undocking, or disconnecting an external monitor, opening Match Manager from the menu bar could fail silently because the window was being restored at coordinates no longer covered by any screen. The window now recenters if its frame doesn't intersect a visible screen.
+- **Match Manager window stuck on another Space** — the panel now follows you to the active Space instead of staying on whichever Space it was last opened on.
+
 ## [1.3.0] - 2026-05-05
 
 ### Added
