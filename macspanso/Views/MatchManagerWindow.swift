@@ -24,6 +24,7 @@ final class MatchManagerWindowController: NSWindowController {
         }
         panel.setFrameAutosaveName(autosaveName)
         panel.isReleasedWhenClosed = false
+        panel.collectionBehavior.insert(.moveToActiveSpace)
 
         // Use NSHostingController (not NSHostingView) so SwiftUI gets full responder-chain
         // integration, keyboard focus cycling, and scene-environment setup.

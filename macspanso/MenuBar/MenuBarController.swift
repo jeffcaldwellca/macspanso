@@ -212,7 +212,13 @@ final class MenuBarController {
         } else {
             NSApp.activate(ignoringOtherApps: true)
         }
-        windowController?.window?.makeKeyAndOrderFront(nil)
+        if let window = windowController?.window {
+            // Display changes (docking, disconnected monitors) can leave the window
+            // at coordinates no current screen covers — recenter if so.
+            let onScreen = NSScreen.screens.contains { $0.frame.intersects(window.frame) }
+            if !onScreen { window.center() }
+            window.makeKeyAndOrderFront(nil)
+        }
         switch focus {
         case .newMatch: windowController?.focusNewMatch()
         case .about:    windowController?.focusAbout()
