@@ -21,8 +21,24 @@ final class EspansoConfigStore: ObservableObject {
         matchFiles.filter { !$0.isPackage }.flatMap { $0.matches }
     }
 
+    /// Names declared under `global_vars:` in any loaded file, sorted.
+    /// Matches may reference these without declaring them locally.
+    var globalVarNames: [String] {
+        var names = Set<String>()
+        for file in matchFiles {
+            guard case let .array(items)? = file.extras["global_vars"] else { continue }
+            for case let .dictionary(entry) in items {
+                if case let .string(name)? = entry["name"] { names.insert(name) }
+            }
+        }
+        return names.sorted()
+    }
+
     init(matchDirectory: URL) {
-        self.matchDirectory = matchDirectory
+        // Resolve symlinks once at the boundary: directory enumeration returns
+        // symlink-resolved URLs (/private/var vs /var), and the store compares
+        // constructed URLs against enumerated ones by equality throughout.
+        self.matchDirectory = matchDirectory.resolvingSymlinksInPath()
         watcher.onChange = { [weak self] url in
             Task { @MainActor in self?.handleExternalChange(at: url) }
         }
@@ -34,9 +50,15 @@ final class EspansoConfigStore: ObservableObject {
         watcher.stopAll()   // clear stale watches if load() is called more than once
         let urls = scanMatchDirectory()
         matchFiles = urls.map { loadFile(at: $0) }
+        // Watch every directory in the tree: a dispatch source on the root
+        // doesn't fire for files created inside subdirectories.
         watcher.watch(url: matchDirectory)
+        scanSubdirectories().forEach { watcher.watch(url: $0) }
         matchFiles.forEach { watcher.watch(url: $0.url) }
     }
+
+    /// espanso v2 loads both extensions.
+    private static let matchExtensions: Set<String> = ["yml", "yaml"]
 
     private func scanMatchDirectory() -> [URL] {
         guard let enumerator = FileManager.default.enumerator(
@@ -46,8 +68,24 @@ final class EspansoConfigStore: ObservableObject {
 
         return enumerator
             .compactMap { $0 as? URL }
-            .filter { $0.pathExtension == "yml" }
+            .filter { Self.matchExtensions.contains($0.pathExtension) }
+            // Normalize: enumeration yields /private/var/… for symlinked roots, while
+            // URLs built via appendingPathComponent(_:) keep /var/…. Resolving strips
+            // the /private prefix so URL equality works across the store.
+            .map { $0.resolvingSymlinksInPath() }
             .sorted { $0.path < $1.path }
+    }
+
+    private func scanSubdirectories() -> [URL] {
+        guard let enumerator = FileManager.default.enumerator(
+            at: matchDirectory,
+            includingPropertiesForKeys: [.isDirectoryKey]
+        ) else { return [] }
+
+        return enumerator
+            .compactMap { $0 as? URL }
+            .filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true }
+            .map { $0.resolvingSymlinksInPath() }
     }
 
     private func loadFile(at url: URL, reusingIDsFrom previous: [EspansoMatch] = []) -> MatchFile {
@@ -55,11 +93,13 @@ final class EspansoConfigStore: ObservableObject {
         let relative = url.path.replacingOccurrences(of: matchDirectory.path, with: "")
         let isPackage = relative.hasPrefix("/packages/")
         do {
-            var matches = try YAMLSerializer.decode(contentsOf: url)
+            let content = try YAMLSerializer.decodeContent(contentsOf: url)
+            var matches = content.matches ?? []
             if !previous.isEmpty {
                 Self.reassociateIDs(into: &matches, from: previous)
             }
-            return MatchFile(url: url, matches: matches, isPackage: isPackage)
+            return MatchFile(url: url, matches: matches, isPackage: isPackage,
+                             extras: content.extras)
         } catch {
             return MatchFile(url: url, matches: [], isPackage: isPackage,
                              parseError: error.localizedDescription)
@@ -92,22 +132,35 @@ final class EspansoConfigStore: ObservableObject {
 
     // MARK: - Write
 
+    /// Full file content for a write: the new matches plus whatever top-level
+    /// extras (global_vars, imports, …) the file carried when loaded.
+    private func fileContent(_ matches: [EspansoMatch], for url: URL) -> MatchFileContent {
+        let extras = matchFiles.first(where: { $0.url == url })?.extras ?? [:]
+        return MatchFileContent(matches: matches, extras: extras)
+    }
+
     /// Registers a write-in-progress for `url` so that the resulting FSEvent is
     /// not mistaken for an external edit. Clears after a short delay to account
     /// for async FSEvent delivery.
     private func suppressingWatcherEvents(for url: URL, _ body: () throws -> Void) rethrows {
-        let paths = [url.path, matchDirectory.path]
+        // Suppress the file itself, its parent directory (atomic writes rename
+        // into it), and the root — all three can emit events for our own write.
+        let paths = [url.path, url.deletingLastPathComponent().path, matchDirectory.path]
         paths.forEach { writingPaths[$0, default: 0] += 1 }
-        try body()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-            guard let self else { return }
-            for p in paths {
-                if let count = self.writingPaths[p] {
-                    if count <= 1 { self.writingPaths.removeValue(forKey: p) }
-                    else { self.writingPaths[p] = count - 1 }
+        // Schedule the decrement even when the write throws — otherwise the
+        // counter leaks and external-edit detection is suppressed forever.
+        defer {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+                guard let self else { return }
+                for p in paths {
+                    if let count = self.writingPaths[p] {
+                        if count <= 1 { self.writingPaths.removeValue(forKey: p) }
+                        else { self.writingPaths[p] = count - 1 }
+                    }
                 }
             }
         }
+        try body()
     }
 
     /// Save a mutated match list back to the file that owns it.
@@ -115,7 +168,7 @@ final class EspansoConfigStore: ObservableObject {
         guard let index = matchFiles.firstIndex(where: { $0.id == fileID }) else { return }
         let url = matchFiles[index].url
         try suppressingWatcherEvents(for: url) {
-            try YAMLSerializer.write(matches, to: url)
+            try YAMLSerializer.write(fileContent(matches, for: url), to: url)
         }
         matchFiles[index].matches = matches
     }
@@ -129,7 +182,7 @@ final class EspansoConfigStore: ObservableObject {
                 updated[j] = match
                 // Write first; only update in-memory if the write succeeds.
                 try suppressingWatcherEvents(for: url) {
-                    try YAMLSerializer.write(updated, to: url)
+                    try YAMLSerializer.write(fileContent(updated, for: url), to: url)
                 }
                 matchFiles[i].matches = updated
                 return
@@ -149,15 +202,16 @@ final class EspansoConfigStore: ObservableObject {
             )
         }
         if let index = matchFiles.firstIndex(where: { $0.url == url }) {
-            matchFiles[index].matches.append(match)
-            let updatedMatches = matchFiles[index].matches
+            // Write first; only update in-memory if the write succeeds.
+            let updatedMatches = matchFiles[index].matches + [match]
             try suppressingWatcherEvents(for: url) {
-                try YAMLSerializer.write(updatedMatches, to: url)
+                try YAMLSerializer.write(fileContent(updatedMatches, for: url), to: url)
             }
+            matchFiles[index].matches = updatedMatches
         } else {
             // File doesn't exist yet — create it
             try suppressingWatcherEvents(for: url) {
-                try YAMLSerializer.write([match], to: url)
+                try YAMLSerializer.write(fileContent([match], for: url), to: url)
             }
             let newFile = MatchFile(url: url, matches: [match], isPackage: false)
             matchFiles.append(newFile)
@@ -249,7 +303,7 @@ final class EspansoConfigStore: ObservableObject {
             updated.insert(copy, at: j + 1)
             let url = matchFiles[i].url
             try suppressingWatcherEvents(for: url) {
-                try YAMLSerializer.write(updated, to: url)
+                try YAMLSerializer.write(fileContent(updated, for: url), to: url)
             }
             matchFiles[i].matches = updated
             return copy
@@ -306,7 +360,7 @@ final class EspansoConfigStore: ObservableObject {
 
         // Write source first; if that fails, in-memory state is unchanged.
         try suppressingWatcherEvents(for: sourceURL) {
-            try YAMLSerializer.write(newSource, to: sourceURL)
+            try YAMLSerializer.write(fileContent(newSource, for: sourceURL), to: sourceURL)
         }
 
         // Write destination — on failure we restore the source on disk so we don't
@@ -316,13 +370,13 @@ final class EspansoConfigStore: ObservableObject {
                 var newDest = matchFiles[destIndex].matches
                 newDest.append(match)
                 try suppressingWatcherEvents(for: targetURL) {
-                    try YAMLSerializer.write(newDest, to: targetURL)
+                    try YAMLSerializer.write(fileContent(newDest, for: targetURL), to: targetURL)
                 }
                 matchFiles[destIndex].matches = newDest
             } else {
                 // Destination file doesn't exist yet — create it.
                 try suppressingWatcherEvents(for: targetURL) {
-                    try YAMLSerializer.write([match], to: targetURL)
+                    try YAMLSerializer.write(fileContent([match], for: targetURL), to: targetURL)
                 }
                 let newFile = MatchFile(url: targetURL, matches: [match], isPackage: false)
                 matchFiles.append(newFile)
@@ -333,7 +387,7 @@ final class EspansoConfigStore: ObservableObject {
         } catch {
             // Roll back the source file write so the match isn't lost.
             try? suppressingWatcherEvents(for: sourceURL) {
-                try YAMLSerializer.write(matchFiles[sourceIndex].matches, to: sourceURL)
+                try YAMLSerializer.write(fileContent(matchFiles[sourceIndex].matches, for: sourceURL), to: sourceURL)
             }
             throw error
         }
@@ -343,12 +397,14 @@ final class EspansoConfigStore: ObservableObject {
     func delete(matchID: UUID) throws {
         for i in matchFiles.indices {
             if let j = matchFiles[i].matches.firstIndex(where: { $0.id == matchID }) {
-                matchFiles[i].matches.remove(at: j)
                 let url = matchFiles[i].url
-                let updatedMatches = matchFiles[i].matches
+                // Write first; only update in-memory if the write succeeds.
+                var updatedMatches = matchFiles[i].matches
+                updatedMatches.remove(at: j)
                 try suppressingWatcherEvents(for: url) {
-                    try YAMLSerializer.write(updatedMatches, to: url)
+                    try YAMLSerializer.write(fileContent(updatedMatches, for: url), to: url)
                 }
+                matchFiles[i].matches = updatedMatches
                 return
             }
         }
@@ -363,16 +419,21 @@ final class EspansoConfigStore: ObservableObject {
 
     private func handleExternalChange(at url: URL) {
         guard writingPaths[url.path] == nil else { return }
-        if url == matchDirectory {
+        var isDirectory: ObjCBool = false
+        FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
+        if url == matchDirectory || isDirectory.boolValue {
             handleDirectoryChange()
         } else {
             externallyChangedURL = url
         }
     }
 
-    /// Called when the match directory itself changes (file added or removed externally).
-    /// Silently syncs matchFiles with what's on disk without prompting the user.
+    /// Called when the match directory (or a subdirectory) changes — a file or
+    /// folder added or removed externally. Silently syncs matchFiles with disk.
     private func handleDirectoryChange() {
+        // Newly created subdirectories need their own watch.
+        scanSubdirectories().forEach { watcher.watch(url: $0) }
+
         let urls = Set(scanMatchDirectory())
         let existingURLs = Set(matchFiles.map { $0.url })
 
@@ -384,7 +445,11 @@ final class EspansoConfigStore: ObservableObject {
             watcher.watch(url: url)
         }
 
-        // Remove files that no longer exist on disk
+        // Remove files that no longer exist on disk (and stop watching them,
+        // so their dispatch sources and file descriptors don't leak)
+        for file in matchFiles where !urls.contains(file.url) {
+            watcher.stopWatching(url: file.url)
+        }
         matchFiles.removeAll { !urls.contains($0.url) }
 
         // Re-sort to keep consistent ordering

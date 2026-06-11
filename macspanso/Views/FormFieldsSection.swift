@@ -112,6 +112,8 @@ struct FormFieldsSection: View {
 struct FormFieldCard: View {
     let name: String
     @Binding var field: FormField
+    /// Stable row identities for dropdown options — see VariableBuilderView.
+    @State private var optionIDs: [UUID] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -172,7 +174,7 @@ struct FormFieldCard: View {
     private var dropdownConfig: some View {
         VStack(alignment: .leading, spacing: 4) {
             let values = field.values ?? []
-            ForEach(Array(values.enumerated()), id: \.offset) { i, _ in
+            ForEach(Array(zip(optionIDs, values.indices)), id: \.0) { _, i in
                 HStack {
                     TextField("option", text: Binding(
                         get: { i < (field.values?.count ?? 0) ? field.values![i] : "" },
@@ -187,6 +189,7 @@ struct FormFieldCard: View {
                     Button {
                         guard (field.values?.count ?? 0) > 1 else { return }
                         field.values?.remove(at: i)
+                        optionIDs.remove(at: i)
                     } label: {
                         Image(systemName: "minus.circle")
                     }
@@ -199,12 +202,22 @@ struct FormFieldCard: View {
             Button {
                 if field.values == nil { field.values = [""] }
                 field.values?.append("")
+                optionIDs.append(UUID())
             } label: {
                 Label("Add option", systemImage: "plus.circle")
                     .font(.callout)
             }
             .buttonStyle(.plain)
             .foregroundStyle(Color.accentColor)
+        }
+        .onAppear { syncOptionIDs() }
+        .onChange(of: (field.values ?? []).count) { _ in syncOptionIDs() }
+    }
+
+    private func syncOptionIDs() {
+        let count = (field.values ?? []).count
+        if optionIDs.count != count {
+            optionIDs = (0..<count).map { _ in UUID() }
         }
     }
 

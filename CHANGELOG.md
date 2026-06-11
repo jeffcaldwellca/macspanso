@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.4.0] - 2026-06-10
+
+### Fixed
+- **Settings beyond matches no longer deleted on save** — editing a match in a file containing `global_vars:`, `imports:`, or any other top-level key used to silently erase those keys when the file was rewritten. Unmodelled per-match options (`markdown:`, `priority:`, `paste_shortcut:`, app filters, …) were dropped the same way. All YAML the editor doesn't model now survives every save.
+- **espanso commands could hang the app** — command output larger than 64 KB (e.g. `espanso log`) deadlocked the process runner, and a missing espanso binary left it blocked forever. Match-directory detection now also times out after 3 seconds and falls back to the default location instead of waiting on a stuck binary.
+- **References to global variables blocked saving** — a `{{name}}` referencing a `global_vars:` declaration in another file was flagged as unresolved and disabled the Save button.
+- **Regex toggle could write invalid YAML** — switching a multi-trigger match to Regex and back produced both `trigger:` and `triggers:` keys on the same match.
+- **Failed saves no longer desync the app** — if a disk write failed, deletes and adds could show state that didn't match the file, and external-edit detection could be silently disabled for the rest of the session. All write paths now keep memory and disk consistent and recover cleanly.
+- **Snooze now ends on time after sleep** — sleeping the Mac through a snooze's end time left espanso disabled; expiry is now checked by the regular status poll.
+- **Date preview literal text** — formats like `Updated: %Y` or `%d days` no longer mangle literal letters in the preview, and `%%` renders as a literal percent.
+- **Backups no longer touch espanso packages** — exports skip `packages/`, and restores never overwrite installed packages, even from older backups that contained them.
+- **Window stays visible when switching apps** — the Match Manager no longer hides when macspanso loses focus.
+- **Symlinked match directories** — file identity now resolves symlinks, preventing duplicate file entries when the config path goes through a symlink.
+
+### Added
+- **`.yaml` support** — match files with the `.yaml` extension are now loaded alongside `.yml`.
+- **Live detection in subfolders** — files added or removed inside subdirectories of the match folder are now picked up immediately, not just at the top level.
+- **Conflict badges in the match list** — triggers defined in more than one file show an inline warning badge in the main list, not just the file tree.
+- **Delete confirmations** — deleting multiple matches at once now asks first.
+- **Session safety snapshot** — opening the Match Manager automatically snapshots your match files (rotating, last 10 kept), so any editing session can be rolled back from "Restore from Snapshot".
+- **Update check feedback** — "Check for Updates…" now reports up to date, update available, or network failure instead of silently doing nothing.
+
+### Improved
+- **Menu freshness** — the menu bar menu rebuilds each time it opens, so the snapshot list and Launch at Login state are always current; stale update checks re-run on open.
+- **Release safety** — CI and the release pipeline now run the full test suite (71 tests, up from 43) with per-test timeouts before any build ships.
+
 ## [1.3.5] - 2026-05-06
 
 ### Fixed

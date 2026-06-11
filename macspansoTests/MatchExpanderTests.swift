@@ -62,3 +62,43 @@ final class MatchExpanderTests: XCTestCase {
         XCTAssertEqual(MatchExpander.preview(of: m), "")
     }
 }
+
+// MARK: - Literal text in date formats
+
+extension MatchExpanderTests {
+
+    private func dateMatch(format: String) -> EspansoMatch {
+        EspansoMatch(
+            trigger: "::d",
+            replace: "{{d}}",
+            vars: [EspansoVar(name: "d", type: .date, params: ["format": .string(format)])]
+        )
+    }
+
+    func testDateFormatLiteralTextPassesThrough() {
+        // 'd', 'a', 'y', 's' are all ICU pattern letters — they must not be
+        // interpreted when they appear as literal text around a token.
+        let preview = MatchExpander.preview(of: dateMatch(format: "%Y days"))
+        let year = Calendar.current.component(.year, from: Date())
+        XCTAssertEqual(preview, "\(year) days")
+    }
+
+    func testDateFormatLiteralPrefixWithColon() {
+        let preview = MatchExpander.preview(of: dateMatch(format: "Updated: %Y"))
+        let year = Calendar.current.component(.year, from: Date())
+        XCTAssertEqual(preview, "Updated: \(year)")
+    }
+
+    func testDateFormatEscapedPercentIsLiteral() {
+        let preview = MatchExpander.preview(of: dateMatch(format: "100%% %Y"))
+        let year = Calendar.current.component(.year, from: Date())
+        XCTAssertEqual(preview, "100% \(year)")
+    }
+
+    func testDateFormatMultipleTokens() {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        let expected = f.string(from: Date())
+        XCTAssertEqual(MatchExpander.preview(of: dateMatch(format: "%Y-%m-%d")), expected)
+    }
+}

@@ -44,6 +44,7 @@ struct MatchListView: View {
     @Binding var searchText: String
     @State private var deleteError: String?
     @State private var duplicateError: String?
+    @State private var confirmMultiDelete = false
     @AppStorage("macspanso.listSort") private var sortRaw: String = MatchListSort.fileOrder.rawValue
     @State private var filter: MatchListFilter = .all
 
@@ -143,13 +144,29 @@ struct MatchListView: View {
             .help("New match")
 
             Button {
-                deleteSelected()
+                // Deleting many matches at once is unrecoverable — confirm first.
+                if selectedMatchIDs.count > 1 {
+                    confirmMultiDelete = true
+                } else {
+                    deleteSelected()
+                }
             } label: {
                 Image(systemName: "minus")
             }
             .buttonStyle(.plain)
             .help(selectedMatchIDs.count > 1 ? "Delete \(selectedMatchIDs.count) matches" : "Delete selected match")
             .disabled(selectedMatchIDs.isEmpty)
+            .confirmationDialog(
+                "Delete \(selectedMatchIDs.count) matches?",
+                isPresented: $confirmMultiDelete
+            ) {
+                Button("Delete \(selectedMatchIDs.count) Matches", role: .destructive) {
+                    deleteSelected()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This permanently removes them from your espanso files.")
+            }
             .alert("Delete Failed", isPresented: Binding(
                 get: { deleteError != nil },
                 set: { if !$0 { deleteError = nil } }
@@ -218,9 +235,21 @@ struct MatchListView: View {
         }
     }
 
+    /// Triggers defined in more than one file — espanso silently picks one.
+    private var conflictedTriggers: Set<String> {
+        Set(store.triggerConflicts().map(\.trigger))
+    }
+
+    private func hasConflict(_ match: EspansoMatch, in conflicted: Set<String>) -> Bool {
+        if let t = match.trigger, conflicted.contains(t) { return true }
+        if let ts = match.triggers, ts.contains(where: conflicted.contains) { return true }
+        return false
+    }
+
     private var flatList: some View {
-        List(filteredMatches, id: \.id, selection: $selectedMatchIDs) { match in
-            MatchRowView(match: match)
+        let conflicted = conflictedTriggers
+        return List(filteredMatches, id: \.id, selection: $selectedMatchIDs) { match in
+            MatchRowView(match: match, isConflicted: hasConflict(match, in: conflicted))
                 .contextMenu { rowContextMenu(for: match.id) }
         }
         .listStyle(.sidebar)
@@ -323,6 +352,7 @@ private struct FilterChip: View {
 
 struct MatchRowView: View {
     let match: EspansoMatch
+    var isConflicted: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -330,6 +360,12 @@ struct MatchRowView: View {
                 Text(match.primaryTrigger)
                     .font(.system(.body, design: .monospaced))
                     .lineLimit(1)
+                if isConflicted {
+                    Image(systemName: "exclamationmark.2")
+                        .imageScale(.small)
+                        .foregroundStyle(.orange)
+                        .help("This trigger is also defined in another file — espanso will only use one of them")
+                }
                 if match.form != nil {
                     Text("form")
                         .font(.caption2)

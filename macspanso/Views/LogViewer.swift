@@ -2,8 +2,8 @@
 import SwiftUI
 
 /// Live tail of espanso's log via `espanso log`. Refreshes every few seconds while
-/// open. Auto-scrolls to the newest line unless the user has scrolled up. Errors and
-/// warnings are highlighted so they're spottable in long output.
+/// open and auto-scrolls to the newest line whenever the line count changes. Errors
+/// and warnings are highlighted so they're spottable in long output.
 struct LogViewer: View {
     let processManager: EspansoProcessManager
 

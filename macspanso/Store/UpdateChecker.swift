@@ -41,29 +41,47 @@ final class UpdateChecker {
 
     // MARK: - Public API
 
-    /// Start automatic checking: fires immediately if stale, then every 24 h.
-    func startChecking() {
-        let lastCheck = UserDefaults.standard.object(forKey: Self.lastCheckKey) as? Date
-        if lastCheck == nil || Date().timeIntervalSince(lastCheck!) >= Self.checkInterval {
-            Task { await fetchLatestRelease() }
-        }
+    /// Outcome of a single check, for user-facing feedback.
+    enum CheckOutcome {
+        case updateAvailable(String)   // newer remote version
+        case upToDate(String)          // current version is latest
+        case failed                    // network / parse failure
+    }
 
+    /// Start automatic checking: fires immediately if stale, then every 24 h.
+    /// Timers don't fire across system sleep, so callers should also invoke
+    /// `checkIfStale()` at natural moments (e.g. when the menu opens).
+    func startChecking() {
+        checkIfStale()
         timer = Timer.scheduledTimer(
             withTimeInterval: Self.checkInterval,
             repeats: true
         ) { [weak self] _ in
-            Task { @MainActor [weak self] in await self?.fetchLatestRelease() }
+            Task { @MainActor [weak self] in _ = await self?.fetchLatestRelease() }
         }
     }
 
-    /// Trigger an immediate check (e.g. from the "Check for Updates" menu item).
-    func checkNow() {
-        Task { await fetchLatestRelease() }
+    /// Fetch only if the last successful check is older than the interval.
+    func checkIfStale() {
+        let lastCheck = UserDefaults.standard.object(forKey: Self.lastCheckKey) as? Date
+        if lastCheck == nil || Date().timeIntervalSince(lastCheck!) >= Self.checkInterval {
+            Task { _ = await fetchLatestRelease() }
+        }
+    }
+
+    /// Trigger an immediate check (e.g. from the "Check for Updates" menu item)
+    /// and report the outcome so the UI can show feedback instead of failing silently.
+    func checkNow(completion: ((CheckOutcome) -> Void)? = nil) {
+        Task {
+            let outcome = await fetchLatestRelease()
+            completion?(outcome)
+        }
     }
 
     // MARK: - Fetch
 
-    private func fetchLatestRelease() async {
+    @discardableResult
+    private func fetchLatestRelease() async -> CheckOutcome {
         var request = URLRequest(url: Self.releasesURL)
         request.setValue("application/vnd.github+json",  forHTTPHeaderField: "Accept")
         request.setValue("2022-11-28",                   forHTTPHeaderField: "X-GitHub-Api-Version")
@@ -72,14 +90,14 @@ final class UpdateChecker {
         guard
             let (data, response) = try? await URLSession.shared.data(for: request),
             let http = response as? HTTPURLResponse, http.statusCode == 200
-        else { return }
+        else { return .failed }
 
         UserDefaults.standard.set(Date(), forKey: Self.lastCheckKey)
 
         guard
             let json     = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
             let tagName  = json["tag_name"] as? String
-        else { return }
+        else { return .failed }
 
         let remote = tagName.hasPrefix("v") ? String(tagName.dropFirst()) : tagName
         let wasAvailable = updateAvailable
@@ -91,6 +109,7 @@ final class UpdateChecker {
         if updateAvailable != wasAvailable || latestVersion != wasVersion {
             onStateChange?()
         }
+        return updateAvailable ? .updateAvailable(remote) : .upToDate(currentVersion)
     }
 
     // MARK: - Version comparison

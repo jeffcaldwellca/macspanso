@@ -86,3 +86,23 @@ final class MatchValidationTests: XCTestCase {
         XCTAssertTrue(errors.contains(.emptyTrigger))
     }
 }
+
+// MARK: - Global variable references
+
+extension MatchValidationTests {
+
+    func testReferenceToGlobalVarIsValid() {
+        // A {{name}} declared in global_vars (another file) must not block saving.
+        let m = EspansoMatch(trigger: "::where", replace: "I live in {{city}}")
+        let errors = MatchValidator.validate(
+            m, existingMatches: [], globalVarNames: ["city"])
+        XCTAssertTrue(errors.isEmpty, "global var reference flagged: \(errors)")
+    }
+
+    func testUnknownVarStillReportedWithGlobalsPresent() {
+        let m = EspansoMatch(trigger: "::x", replace: "{{nope}}")
+        let errors = MatchValidator.validate(
+            m, existingMatches: [], globalVarNames: ["city"])
+        XCTAssertEqual(errors, [.unresolvedVarReference("nope")])
+    }
+}

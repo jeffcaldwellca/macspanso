@@ -25,6 +25,9 @@ final class MatchManagerWindowController: NSWindowController {
         panel.setFrameAutosaveName(autosaveName)
         panel.isReleasedWhenClosed = false
         panel.collectionBehavior.insert(.moveToActiveSpace)
+        // NSPanel defaults to hiding when the app deactivates — wrong for a
+        // main editing window; users expect it to stay put when they switch apps.
+        panel.hidesOnDeactivate = false
 
         // Use NSHostingController (not NSHostingView) so SwiftUI gets full responder-chain
         // integration, keyboard focus cycling, and scene-environment setup.

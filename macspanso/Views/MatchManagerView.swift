@@ -165,6 +165,7 @@ private struct BulkActionPanel: View {
     @ObservedObject var store: EspansoConfigStore
     @Binding var selectedIDs: Set<UUID>
     @State private var actionError: String?
+    @State private var confirmDelete = false
 
     private var selectedMatches: [EspansoMatch] {
         store.allMatches.filter { selectedIDs.contains($0.id) }
@@ -194,11 +195,22 @@ private struct BulkActionPanel: View {
                 .disabled(store.writableFiles.isEmpty)
 
                 Button(role: .destructive) {
-                    deleteAll()
+                    confirmDelete = true
                 } label: {
                     Label("Delete All", systemImage: "trash")
                 }
                 .buttonStyle(.bordered)
+                .confirmationDialog(
+                    "Delete \(selectedIDs.count) matches?",
+                    isPresented: $confirmDelete
+                ) {
+                    Button("Delete \(selectedIDs.count) Matches", role: .destructive) {
+                        deleteAll()
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("This permanently removes them from your espanso files.")
+                }
 
                 Button("Clear Selection") {
                     selectedIDs = []

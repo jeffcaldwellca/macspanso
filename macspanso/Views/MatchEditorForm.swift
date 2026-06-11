@@ -216,19 +216,12 @@ struct MatchEditorForm: View {
                 .frame(width: 120)
                 .onChange(of: useRegex) { regex in
                     if regex {
-                        savedTriggers = draft.triggers  // preserve for restore
-                        draft.regex = draft.trigger ?? draft.triggers?.first ?? ""
-                        draft.trigger = nil
-                        draft.triggers = nil
+                        savedTriggers = TriggerModeTransition.toRegex(&draft)
                         triggerEntryIDs = []
                     } else {
-                        draft.trigger = draft.regex ?? ""
-                        draft.regex = nil
-                        if let saved = savedTriggers {
-                            draft.triggers = saved
-                            triggerEntryIDs = saved.map { _ in UUID() }
-                            savedTriggers = nil
-                        }
+                        TriggerModeTransition.toText(&draft, restoring: savedTriggers)
+                        triggerEntryIDs = (draft.triggers ?? []).map { _ in UUID() }
+                        savedTriggers = nil
                     }
                 }
             }
@@ -502,7 +495,8 @@ struct MatchEditorForm: View {
     private func revalidate() {
         var errors = MatchValidator.validate(
             draft,
-            existingMatches: store.allMatches.filter { $0.id != draft.id }
+            existingMatches: store.allMatches.filter { $0.id != draft.id },
+            globalVarNames: Set(store.globalVarNames)
         )
         // In form mode, {{name}} placeholders refer to form fields, not vars — suppress false positives.
         if isFormMatch {

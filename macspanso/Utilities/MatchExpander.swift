@@ -54,23 +54,53 @@ public enum MatchExpander {
         return nil
     }
 
-    /// Convert the most common strftime tokens espanso accepts into ICU patterns
-    /// understood by `DateFormatter`. Unknown tokens pass through verbatim, which
-    /// matches espanso's behavior of treating unknown specifiers as literals.
+    private static let strftimeToICU: [Character: String] = [
+        "Y": "yyyy", "y": "yy",
+        "m": "MM", "B": "MMMM", "b": "MMM",
+        "d": "dd", "e": "d",
+        "H": "HH", "I": "hh",
+        "M": "mm", "S": "ss",
+        "A": "EEEE", "a": "EEE",
+        "p": "a", "P": "a",
+    ]
+
+    /// Convert the most common strftime tokens espanso accepts into an ICU
+    /// pattern for `DateFormatter`. Literal text is single-quoted so letters
+    /// like "days" aren't interpreted as ICU pattern characters; `%%` is a
+    /// literal percent; unknown `%x` tokens pass through as literals, matching
+    /// espanso's behavior.
     private static func formatDate(strftimePattern: String) -> String {
-        let mapping: [(String, String)] = [
-            ("%Y", "yyyy"), ("%y", "yy"),
-            ("%m", "MM"), ("%B", "MMMM"), ("%b", "MMM"),
-            ("%d", "dd"), ("%e", "d"),
-            ("%H", "HH"), ("%I", "hh"),
-            ("%M", "mm"), ("%S", "ss"),
-            ("%A", "EEEE"), ("%a", "EEE"),
-            ("%p", "a"), ("%P", "a"),
-        ]
-        var pattern = strftimePattern
-        for (s, d) in mapping {
-            pattern = pattern.replacingOccurrences(of: s, with: d)
+        var pattern = ""
+        var literal = ""
+        func flushLiteral() {
+            guard !literal.isEmpty else { return }
+            pattern += "'" + literal.replacingOccurrences(of: "'", with: "''") + "'"
+            literal = ""
         }
+
+        var i = strftimePattern.startIndex
+        while i < strftimePattern.endIndex {
+            let ch = strftimePattern[i]
+            let next = strftimePattern.index(after: i)
+            if ch == "%", next < strftimePattern.endIndex {
+                let token = strftimePattern[next]
+                if token == "%" {
+                    literal.append("%")
+                } else if let icu = strftimeToICU[token] {
+                    flushLiteral()
+                    pattern += icu
+                } else {
+                    literal.append("%")
+                    literal.append(token)
+                }
+                i = strftimePattern.index(after: next)
+            } else {
+                literal.append(ch)
+                i = next
+            }
+        }
+        flushLiteral()
+
         let f = DateFormatter()
         f.dateFormat = pattern
         return f.string(from: Date())

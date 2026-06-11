@@ -4,6 +4,9 @@ import SwiftUI
 struct VariableBuilderView: View {
     @Binding var vars: [EspansoVar]?
     @State private var showTypePicker = false
+    /// Stable row identities parallel to `vars` — index-based ForEach identity
+    /// makes SwiftUI reuse row state (focus, text fields) across deletions.
+    @State private var entryIDs: [UUID] = []
 
     private var varList: [EspansoVar] { vars ?? [] }
 
@@ -15,7 +18,7 @@ struct VariableBuilderView: View {
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
 
-            ForEach(Array(varList.enumerated()), id: \.offset) { i, _ in
+            ForEach(Array(zip(entryIDs, varList.indices)), id: \.0) { _, i in
                 VarCardView(
                     variable: Binding(
                         get: { i < (vars?.count ?? 0) ? vars![i] : EspansoVar(name: "", type: .echo) },
@@ -27,6 +30,7 @@ struct VariableBuilderView: View {
                     onDelete: {
                         if i < (vars?.count ?? 0) {
                             vars?.remove(at: i)
+                            entryIDs.remove(at: i)
                             if vars?.isEmpty == true { vars = nil }
                         }
                     }
@@ -42,6 +46,8 @@ struct VariableBuilderView: View {
             .buttonStyle(.plain)
             .foregroundStyle(Color.accentColor)
         }
+        .onAppear { syncEntryIDs() }
+        .onChange(of: varList.count) { _ in syncEntryIDs() }
         .sheet(isPresented: $showTypePicker) {
             VarTypePickerSheet { type in
                 let existing = Set(varList.map(\.name))
@@ -50,8 +56,16 @@ struct VariableBuilderView: View {
                 let newVar = EspansoVar(name: "var\(n)", type: type)
                 if vars == nil { vars = [] }
                 vars?.append(newVar)
+                entryIDs.append(UUID())
                 showTypePicker = false
             }
+        }
+    }
+
+    /// Re-sync after external mutations (e.g. the editor re-initializing the draft).
+    private func syncEntryIDs() {
+        if entryIDs.count != varList.count {
+            entryIDs = varList.map { _ in UUID() }
         }
     }
 }

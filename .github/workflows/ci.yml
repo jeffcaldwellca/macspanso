@@ -33,8 +33,12 @@ jobs:
 
       - name: Test
         run: |
+          # Per-test timeout so a hanging test fails the job instead of
+          # stalling it until the 6-hour runner limit.
           xcodebuild test \
             -scheme macspanso \
             -destination 'platform=macOS' \
+            -test-timeouts-enabled YES \
+            -default-test-execution-time-allowance 60 \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=NO

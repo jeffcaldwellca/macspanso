@@ -33,7 +33,7 @@ final class BackupManager {
         }
 
         do {
-            try await zip(matchDirectory: matchDirectory, to: dest)
+            try await Self.zipMatchDirectory(matchDirectory, to: dest)
         } catch {
             showAlert(title: "Export Failed", message: error.localizedDescription)
         }
@@ -58,7 +58,7 @@ final class BackupManager {
                 try? await createSnapshot()
                 try deleteUserMatchFiles()
             }
-            try await unzip(source, to: matchDirectory)
+            try await Self.unzipBackup(source, to: matchDirectory)
             store?.load()
         } catch {
             showAlert(title: "Import Failed", message: error.localizedDescription)
@@ -94,7 +94,7 @@ final class BackupManager {
         let stamp = ISO8601DateFormatter().string(from: Date())
             .replacingOccurrences(of: ":", with: "-")
         let url = dir.appendingPathComponent("snapshot-\(stamp).\(Self.backupExtension)")
-        try await zip(matchDirectory: matchDirectory, to: url)
+        try await Self.zipMatchDirectory(matchDirectory, to: url)
         Self.pruneOldSnapshots()
     }
 
@@ -129,7 +129,7 @@ final class BackupManager {
             // Snapshot the current state too — restoring is itself destructive.
             try? await createSnapshot()
             try deleteUserMatchFiles()
-            try await unzip(snapshot.url, to: matchDirectory)
+            try await Self.unzipBackup(snapshot.url, to: matchDirectory)
             store?.load()
         } catch {
             showAlert(title: "Restore Failed", message: error.localizedDescription)
@@ -138,7 +138,9 @@ final class BackupManager {
 
     // MARK: - Zip Operations
 
-    private func zip(matchDirectory: URL, to destination: URL) async throws {
+    /// Zip the user's match files into `destination`. Espanso-managed
+    /// `packages/` content is the package manager's to back up, not ours.
+    static func zipMatchDirectory(_ matchDirectory: URL, to destination: URL) async throws {
         if FileManager.default.fileExists(atPath: destination.path) {
             try FileManager.default.removeItem(at: destination)
         }
@@ -149,7 +151,9 @@ final class BackupManager {
         try await Task.detached(priority: .userInitiated) {
             let proc = Process()
             proc.executableURL = URL(fileURLWithPath: "/usr/bin/zip")
-            proc.arguments = ["-r", destPath, "."]
+            // Both pattern forms — zip may store entries with or without "./".
+            proc.arguments = ["-r", destPath, ".",
+                              "-x", "packages/*", "./packages/*"]
             proc.currentDirectoryURL = URL(fileURLWithPath: dirPath)
             let errPipe = Pipe()
             proc.standardOutput = Pipe()
@@ -165,14 +169,17 @@ final class BackupManager {
         }.value
     }
 
-    private func unzip(_ source: URL, to destination: URL) async throws {
+    /// Extract a backup into `destination`. Never writes into `packages/`,
+    /// even when restoring a legacy backup that captured package files.
+    static func unzipBackup(_ source: URL, to destination: URL) async throws {
         let srcPath = source.path
         let destPath = destination.path
 
         try await Task.detached(priority: .userInitiated) {
             let proc = Process()
             proc.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
-            proc.arguments = ["-o", srcPath, "-d", destPath]
+            proc.arguments = ["-o", srcPath, "-d", destPath,
+                              "-x", "packages/*", "./packages/*"]
             let errPipe = Pipe()
             proc.standardOutput = Pipe()
             proc.standardError = errPipe

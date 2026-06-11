@@ -10,13 +10,17 @@
 		08F6052A816BB9ACCA0C29A1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0E594E96E837F06FCDA74BD /* AppDelegate.swift */; };
 		0F17F80BC41F084C725C8D3C /* EspansoMatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B9CF37AC7F49D20F5E7DFE9 /* EspansoMatch.swift */; };
 		19246F7064B28DCD6C29425B /* MatchManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD5338108243F0B53E1D4DD7 /* MatchManagerView.swift */; };
+		1CC6166FFF8C6E24CC4B4AB9 /* RoundTripPreservationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B14B1A11DF46F0BD7EB11BEB /* RoundTripPreservationTests.swift */; };
+		1EFA438CA5AC5BE32547A12E /* EspansoProcessManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 582A3F021D21611324D06406 /* EspansoProcessManagerTests.swift */; };
 		21805B927116698A7059F1F6 /* ExternalEditBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4998035434E6109CE059E65F /* ExternalEditBanner.swift */; };
 		2D5135290BE95A9F7DC59D33 /* EspansoProcessManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F2E60463216EC9368B4ABC6 /* EspansoProcessManager.swift */; };
+		3675C46258E205B3A46814B7 /* TriggerModeTransition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 142ED47EF8B3DEC59AE059EC /* TriggerModeTransition.swift */; };
 		3707A90CFF568DAEDE178BF0 /* YAMLParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB31B0A80C7E4AB1B688D07 /* YAMLParsingTests.swift */; };
 		3855893A74AAF9935C0EC172 /* LogViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB5A70E53C2C5BAE42F7ABBD /* LogViewer.swift */; };
 		47B4E2B111B9796B49C8AA34 /* FormFieldsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C878548B9B683C2270B1273 /* FormFieldsSection.swift */; };
 		4A4B9964BA81D2E52E0272CD /* MatchListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0F930F9C211A0971B16A7A /* MatchListView.swift */; };
 		60D9D5294EF11BD883A67895 /* EspansoVar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BA30315FCC8E232EF0619A7 /* EspansoVar.swift */; };
+		61EDF930BF4D96D560F18CF8 /* BackupManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 617A9D23BF90860C85909EC2 /* BackupManagerTests.swift */; };
 		6434EB61ADEEE00F6CFC0DF7 /* DiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02EA671901CA4DAFC1F75E0C /* DiagnosticsView.swift */; };
 		674DE122D0A6EEB69B24E606 /* YAMLSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5052F737DE80E9307D1A5CD /* YAMLSerializer.swift */; };
 		6A5A359E1C1F69C6BBFA28BB /* FileWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FB8530FDA5F7A4FF993B443 /* FileWatcher.swift */; };
@@ -24,12 +28,15 @@
 		7DBA6F75EEA2397E14800BA1 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D9311AD3CA4F25DF3E49BF7 /* MenuBarController.swift */; };
 		8088A487EDAFF5DEF6CD69E5 /* logo-sm.png in Resources */ = {isa = PBXBuildFile; fileRef = 48296F73242EFFBEAF516FEC /* logo-sm.png */; };
 		81D985B3200D4ED0CD6F10E5 /* MatchValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 197269D9A01D91DFA8FDD98B /* MatchValidationTests.swift */; };
+		8254DD54CA576CFB4230E019 /* TriggerModeTransitionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CB0240EC4BC5EA2A9BDDBDB /* TriggerModeTransitionTests.swift */; };
 		83CE32541305E31383616EE5 /* VariableBuilderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9139A78FA597BE9FF574C077 /* VariableBuilderView.swift */; };
+		8E6B0EA0BA6FB4A43B1AB88E /* EspansoConfigStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5970F4B2C15BC128D9A8456 /* EspansoConfigStoreTests.swift */; };
 		8ECA817CBF7170DADD934DDA /* Yams in Frameworks */ = {isa = PBXBuildFile; productRef = 5FB62BECB934B23CAC5FA023 /* Yams */; };
 		8FD245E778174C4BE5A673FF /* EspansoConfigStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2BA586C50EFE4FBCE76492D /* EspansoConfigStore.swift */; };
 		91C4437F5DD9899E51510D52 /* IDReassociationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C313B2ED2B094696683AD0D1 /* IDReassociationTests.swift */; };
 		940CB95865F935DBDBDDDB21 /* macspansoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73300D0AA66B88477808373 /* macspansoApp.swift */; };
 		945285C3E38182EB610CD985 /* FormField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89DC13EF64A6AE194B8E4329 /* FormField.swift */; };
+		973591997CC091DE83924164 /* YAMLAny.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8509E46B021A8471FDA9983C /* YAMLAny.swift */; };
 		9994F33BE0354A89D826B906 /* YAMLSerializationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55A823094350043793627A9A /* YAMLSerializationTests.swift */; };
 		9BCBA5C7D6166D802CA1F54D /* MatchEditorForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = F077C06E3B872B55BA7D135E /* MatchEditorForm.swift */; };
 		9BD8321A9E830D64DF820D8A /* MatchExpanderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCB60FA98EE57D48527FB2EA /* MatchExpanderTests.swift */; };
@@ -63,10 +70,12 @@
 		0882C2FC91DCC46DD6BC48EE /* FileTreeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileTreeView.swift; sourceTree = "<group>"; };
 		0C878548B9B683C2270B1273 /* FormFieldsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormFieldsSection.swift; sourceTree = "<group>"; };
 		0F2E60463216EC9368B4ABC6 /* EspansoProcessManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EspansoProcessManager.swift; sourceTree = "<group>"; };
+		142ED47EF8B3DEC59AE059EC /* TriggerModeTransition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerModeTransition.swift; sourceTree = "<group>"; };
 		197269D9A01D91DFA8FDD98B /* MatchValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchValidationTests.swift; sourceTree = "<group>"; };
 		1B9CF37AC7F49D20F5E7DFE9 /* EspansoMatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EspansoMatch.swift; sourceTree = "<group>"; };
 		1BA30315FCC8E232EF0619A7 /* EspansoVar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EspansoVar.swift; sourceTree = "<group>"; };
 		1FB8530FDA5F7A4FF993B443 /* FileWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileWatcher.swift; sourceTree = "<group>"; };
+		2CB0240EC4BC5EA2A9BDDBDB /* TriggerModeTransitionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerModeTransitionTests.swift; sourceTree = "<group>"; };
 		2D9311AD3CA4F25DF3E49BF7 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
 		35DBB64F4559E50573FEBB39 /* macspansoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = macspansoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3BD15449088C2D9C3490DF19 /* MatchExpander.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchExpander.swift; sourceTree = "<group>"; };
@@ -77,17 +86,21 @@
 		4998035434E6109CE059E65F /* ExternalEditBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalEditBanner.swift; sourceTree = "<group>"; };
 		4FFDCF28DBEF79CDB9D20962 /* TriggerConflictTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerConflictTests.swift; sourceTree = "<group>"; };
 		55A823094350043793627A9A /* YAMLSerializationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YAMLSerializationTests.swift; sourceTree = "<group>"; };
+		582A3F021D21611324D06406 /* EspansoProcessManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EspansoProcessManagerTests.swift; sourceTree = "<group>"; };
+		617A9D23BF90860C85909EC2 /* BackupManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupManagerTests.swift; sourceTree = "<group>"; };
 		6750794A19508E640DB18607 /* MatchManagerWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchManagerWindow.swift; sourceTree = "<group>"; };
 		7079D876C9FD81D8E9087C4C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		70FA31CC02022AE2267674F3 /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateChecker.swift; sourceTree = "<group>"; };
 		7D101A2C6D185C3EC5C0BC8D /* macspanso.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = macspanso.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7D7EBB169B203D1E23937442 /* ViewStubs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewStubs.swift; sourceTree = "<group>"; };
+		8509E46B021A8471FDA9983C /* YAMLAny.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YAMLAny.swift; sourceTree = "<group>"; };
 		89DC13EF64A6AE194B8E4329 /* FormField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormField.swift; sourceTree = "<group>"; };
 		9139A78FA597BE9FF574C077 /* VariableBuilderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VariableBuilderView.swift; sourceTree = "<group>"; };
 		9F15E7CE6C04870BF8BD59FD /* MatchValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchValidator.swift; sourceTree = "<group>"; };
 		A0E594E96E837F06FCDA74BD /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		AC6E6239414178F116D8F07F /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		AD5338108243F0B53E1D4DD7 /* MatchManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchManagerView.swift; sourceTree = "<group>"; };
+		B14B1A11DF46F0BD7EB11BEB /* RoundTripPreservationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundTripPreservationTests.swift; sourceTree = "<group>"; };
 		B5052F737DE80E9307D1A5CD /* YAMLSerializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YAMLSerializer.swift; sourceTree = "<group>"; };
 		BB5A70E53C2C5BAE42F7ABBD /* LogViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogViewer.swift; sourceTree = "<group>"; };
 		BBB31B0A80C7E4AB1B688D07 /* YAMLParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YAMLParsingTests.swift; sourceTree = "<group>"; };
@@ -97,6 +110,7 @@
 		D2BA586C50EFE4FBCE76492D /* EspansoConfigStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EspansoConfigStore.swift; sourceTree = "<group>"; };
 		D4220130AFAC8146CE4396C7 /* BackupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupManager.swift; sourceTree = "<group>"; };
 		F077C06E3B872B55BA7D135E /* MatchEditorForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchEditorForm.swift; sourceTree = "<group>"; };
+		F5970F4B2C15BC128D9A8456 /* EspansoConfigStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EspansoConfigStoreTests.swift; sourceTree = "<group>"; };
 		F73300D0AA66B88477808373 /* macspansoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = macspansoApp.swift; sourceTree = "<group>"; };
 		FCB60FA98EE57D48527FB2EA /* MatchExpanderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchExpanderTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -143,6 +157,7 @@
 				1BA30315FCC8E232EF0619A7 /* EspansoVar.swift */,
 				89DC13EF64A6AE194B8E4329 /* FormField.swift */,
 				3BFC9A2FF067F185C8063123 /* MatchFile.swift */,
+				8509E46B021A8471FDA9983C /* YAMLAny.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -150,10 +165,15 @@
 		4A08BFB5B5EA54D2088EA67E /* macspansoTests */ = {
 			isa = PBXGroup;
 			children = (
+				617A9D23BF90860C85909EC2 /* BackupManagerTests.swift */,
+				F5970F4B2C15BC128D9A8456 /* EspansoConfigStoreTests.swift */,
+				582A3F021D21611324D06406 /* EspansoProcessManagerTests.swift */,
 				C313B2ED2B094696683AD0D1 /* IDReassociationTests.swift */,
 				FCB60FA98EE57D48527FB2EA /* MatchExpanderTests.swift */,
 				197269D9A01D91DFA8FDD98B /* MatchValidationTests.swift */,
+				B14B1A11DF46F0BD7EB11BEB /* RoundTripPreservationTests.swift */,
 				4FFDCF28DBEF79CDB9D20962 /* TriggerConflictTests.swift */,
+				2CB0240EC4BC5EA2A9BDDBDB /* TriggerModeTransitionTests.swift */,
 				BBB31B0A80C7E4AB1B688D07 /* YAMLParsingTests.swift */,
 				55A823094350043793627A9A /* YAMLSerializationTests.swift */,
 			);
@@ -165,6 +185,7 @@
 			children = (
 				3BD15449088C2D9C3490DF19 /* MatchExpander.swift */,
 				9F15E7CE6C04870BF8BD59FD /* MatchValidator.swift */,
+				142ED47EF8B3DEC59AE059EC /* TriggerModeTransition.swift */,
 				B5052F737DE80E9307D1A5CD /* YAMLSerializer.swift */,
 			);
 			path = Utilities;
@@ -364,9 +385,11 @@
 				E6992F88EDDAE0B39C74A914 /* MatchValidator.swift in Sources */,
 				7DBA6F75EEA2397E14800BA1 /* MenuBarController.swift in Sources */,
 				C79B3B36F017FA388F31A648 /* QuickSwitcherView.swift in Sources */,
+				3675C46258E205B3A46814B7 /* TriggerModeTransition.swift in Sources */,
 				EB11099E32AB2AF21663ADF3 /* UpdateChecker.swift in Sources */,
 				83CE32541305E31383616EE5 /* VariableBuilderView.swift in Sources */,
 				C72420319FBF0791E1119040 /* ViewStubs.swift in Sources */,
+				973591997CC091DE83924164 /* YAMLAny.swift in Sources */,
 				674DE122D0A6EEB69B24E606 /* YAMLSerializer.swift in Sources */,
 				940CB95865F935DBDBDDDB21 /* macspansoApp.swift in Sources */,
 			);
@@ -376,10 +399,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				61EDF930BF4D96D560F18CF8 /* BackupManagerTests.swift in Sources */,
+				8E6B0EA0BA6FB4A43B1AB88E /* EspansoConfigStoreTests.swift in Sources */,
+				1EFA438CA5AC5BE32547A12E /* EspansoProcessManagerTests.swift in Sources */,
 				91C4437F5DD9899E51510D52 /* IDReassociationTests.swift in Sources */,
 				9BD8321A9E830D64DF820D8A /* MatchExpanderTests.swift in Sources */,
 				81D985B3200D4ED0CD6F10E5 /* MatchValidationTests.swift in Sources */,
+				1CC6166FFF8C6E24CC4B4AB9 /* RoundTripPreservationTests.swift in Sources */,
 				DEEE48DB738AA4967926024C /* TriggerConflictTests.swift in Sources */,
+				8254DD54CA576CFB4230E019 /* TriggerModeTransitionTests.swift in Sources */,
 				3707A90CFF568DAEDE178BF0 /* YAMLParsingTests.swift in Sources */,
 				9994F33BE0354A89D826B906 /* YAMLSerializationTests.swift in Sources */,
 			);

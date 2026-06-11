@@ -28,6 +28,19 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
 
+      # ── Tests ──────────────────────────────────────────────────────────────
+      # Never ship a tag whose tests don't pass.
+
+      - name: Test
+        run: |
+          xcodebuild test \
+            -scheme macspanso \
+            -destination 'platform=macOS' \
+            -test-timeouts-enabled YES \
+            -default-test-execution-time-allowance 60 \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO
+
       # ── Code signing ───────────────────────────────────────────────────────
       # Required secrets: MACOS_CERTIFICATE (base64 .p12), MACOS_CERTIFICATE_PASSWORD, KEYCHAIN_PASSWORD
 

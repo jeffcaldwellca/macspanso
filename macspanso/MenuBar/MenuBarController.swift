@@ -4,14 +4,16 @@ import Combine
 import ServiceManagement
 
 @MainActor
-final class MenuBarController {
+final class MenuBarController: NSObject, NSMenuDelegate {
     private var statusItem: NSStatusItem
+    private let menu = NSMenu()
     private let store: EspansoConfigStore
     private let processManager: EspansoProcessManager
     private var cancellables = Set<AnyCancellable>()
     private var windowController: MatchManagerWindowController?
     private let backupManager: BackupManager
     private let updateChecker: UpdateChecker
+    private var didCreateSessionSnapshot = false
 
     private static let espansoURL = URL(string: "https://espanso.org")!
     private static let releasesURL = URL(string: "https://github.com/jeffcaldwellca/macspanso/releases/latest")!
@@ -22,8 +24,11 @@ final class MenuBarController {
         self.backupManager = BackupManager(matchDirectory: store.matchDirectory, store: store)
         self.updateChecker = updateChecker
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        super.init()
 
         configureIcon()
+        menu.delegate = self
+        statusItem.menu = menu
         buildMenu()
 
         // Rebuild menu only when the daemon state actually changes.
@@ -44,6 +49,14 @@ final class MenuBarController {
             self?.configureIcon()
             self?.buildMenu()
         }
+    }
+
+    /// Rebuild just before the menu opens so the snapshot list and
+    /// launch-at-login state are always current; also a natural moment to
+    /// refresh a stale update check (timers don't fire across system sleep).
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        updateChecker.checkIfStale()
+        buildMenu()
     }
 
     private func configureIcon() {
@@ -68,7 +81,7 @@ final class MenuBarController {
     }
 
     private func buildMenu() {
-        let menu = NSMenu()
+        menu.removeAllItems()
 
         // Header item — shows espanso's status, not macspanso's running state
         let headerTitle: String
@@ -173,8 +186,6 @@ final class MenuBarController {
         let quitItem = NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)),
                                   keyEquivalent: "q")
         menu.addItem(quitItem)
-
-        statusItem.menu = menu
     }
 
     // MARK: - Actions
@@ -194,6 +205,12 @@ final class MenuBarController {
     private enum Focus { case none, newMatch, about }
 
     private func showMatchManager(focus: Focus) {
+        // Safety net: capture pre-edit state once per session before the user
+        // can make any changes through the editor.
+        if !didCreateSessionSnapshot && !store.matchFiles.isEmpty {
+            didCreateSessionSnapshot = true
+            Task { try? await backupManager.createSnapshot() }
+        }
         if windowController == nil {
             let wc = MatchManagerWindowController(store: store, processManager: processManager)
             // window is guaranteed non-nil: MatchManagerWindowController calls
@@ -351,7 +368,28 @@ final class MenuBarController {
     }
 
     @objc private func checkForUpdates() {
-        updateChecker.checkNow()
+        updateChecker.checkNow { [weak self] outcome in
+            guard let self else { return }
+            let alert = NSAlert()
+            switch outcome {
+            case .updateAvailable(let version):
+                alert.messageText = "Update Available"
+                alert.informativeText = "macspanso v\(version) is available."
+                alert.addButton(withTitle: "View Release")
+                alert.addButton(withTitle: "Later")
+                if alert.runModal() == .alertFirstButtonReturn {
+                    NSWorkspace.shared.open(Self.releasesURL)
+                }
+            case .upToDate(let version):
+                alert.messageText = "You're Up to Date"
+                alert.informativeText = "macspanso v\(version) is the latest version."
+                alert.runModal()
+            case .failed:
+                alert.messageText = "Couldn't Check for Updates"
+                alert.informativeText = "GitHub could not be reached. Check your connection and try again."
+                alert.runModal()
+            }
+        }
     }
 
     @objc private func toggleLaunchAtLogin() {

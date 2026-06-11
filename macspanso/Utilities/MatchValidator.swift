@@ -11,7 +11,13 @@ public enum ValidationError: Equatable {
 }
 
 public enum MatchValidator {
-    public static func validate(_ match: EspansoMatch, existingMatches: [EspansoMatch]) -> [ValidationError] {
+    /// `globalVarNames`: names declared in `global_vars:` anywhere in the config;
+    /// `{{ref}}`s to them are valid even though the match doesn't declare them.
+    public static func validate(
+        _ match: EspansoMatch,
+        existingMatches: [EspansoMatch],
+        globalVarNames: Set<String> = []
+    ) -> [ValidationError] {
         var errors: [ValidationError] = []
 
         // Build the canonical trigger strings for this match (non-empty only)
@@ -54,10 +60,11 @@ public enum MatchValidator {
             errors.append(.emptyFormTemplate)
         }
 
-        // {{varName}} references in replace must resolve to declared vars
+        // {{varName}} references in replace must resolve to declared vars —
+        // either the match's own or names declared under global_vars anywhere.
         if let replace = match.replace {
             let refs = varReferences(in: replace)
-            let declared = Set((match.vars ?? []).map(\.name))
+            let declared = Set((match.vars ?? []).map(\.name)).union(globalVarNames)
             for ref in refs where !declared.contains(ref) {
                 errors.append(.unresolvedVarReference(ref))
             }

@@ -19,6 +19,10 @@ public struct EspansoMatch: Identifiable, Codable, Equatable {
     public var propagateCase: Bool?
     public var word: Bool?
 
+    /// YAML keys on this match that macspanso doesn't model (markdown, priority,
+    /// paste_shortcut, …), preserved verbatim so editing never destroys them.
+    public var extras: [String: YAMLAny] = [:]
+
     public init(
         id: UUID = .init(),
         trigger: String? = nil,
@@ -46,11 +50,15 @@ public struct EspansoMatch: Identifiable, Codable, Equatable {
     }
 
     // id is internal — exclude from YAML encode/decode
-    private enum CodingKeys: String, CodingKey {
+    private enum CodingKeys: String, CodingKey, CaseIterable {
         case trigger, triggers, regex, replace, form, vars, label, word
         case formFields    = "form_fields"
         case propagateCase = "propagate_case"
     }
+
+    /// YAML key names this model handles explicitly; anything else is an extra.
+    private static let knownKeys: Set<String> =
+        Set(CodingKeys.allCases.map(\.rawValue))
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -67,6 +75,14 @@ public struct EspansoMatch: Identifiable, Codable, Equatable {
         self.word          = try c.decodeIfPresent(Bool.self,                forKey: .word)
         // `form:` takes precedence — clear `replace:` if both are present in malformed YAML.
         if self.form != nil { self.replace = nil }
+
+        // Preserve every key this model doesn't handle so a rewrite never drops it.
+        let dynamic = try decoder.container(keyedBy: AnyCodingKey.self)
+        var extras: [String: YAMLAny] = [:]
+        for key in dynamic.allKeys where !Self.knownKeys.contains(key.stringValue) {
+            extras[key.stringValue] = try dynamic.decode(YAMLAny.self, forKey: key)
+        }
+        self.extras = extras
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -81,6 +97,11 @@ public struct EspansoMatch: Identifiable, Codable, Equatable {
         try c.encodeIfPresent(label,         forKey: .label)
         try c.encodeIfPresent(propagateCase, forKey: .propagateCase)
         try c.encodeIfPresent(word,          forKey: .word)
+
+        var dynamic = encoder.container(keyedBy: AnyCodingKey.self)
+        for key in extras.keys.sorted() {
+            try dynamic.encode(extras[key]!, forKey: AnyCodingKey(stringValue: key))
+        }
     }
 
     // Convenience: the primary trigger string for display

@@ -52,6 +52,11 @@ final class EspansoProcessManager: ObservableObject {
     /// Refreshes daemon state by running `espanso status` off the main thread.
     // Verified against espanso v2.2.x output. Check if output strings change on upgrade.
     func refresh() async {
+        // Timers don't fire during system sleep, so a snooze can outlive its end
+        // date — the poll is the reliable place to notice and re-enable.
+        if let end = snoozeUntil, end <= Date() {
+            cancelSnooze(reenable: true)
+        }
         let output = await run("status")
         let lower = output.lowercased()
         if lower.contains("not running") || lower.contains("stopped") {
@@ -182,10 +187,18 @@ final class EspansoProcessManager: ObservableObject {
             let pipe = Pipe()
             proc.standardOutput = pipe
             proc.standardError = pipe
-            try? proc.run()
+            do {
+                try proc.run()
+            } catch {
+                // Launch failed: return before touching the pipe. Our process
+                // still holds its write end, so a read would never see EOF.
+                return ""
+            }
+            // Drain to EOF *before* waiting: output beyond the ~64 KB pipe
+            // buffer would otherwise block the child and deadlock both sides.
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
             proc.waitUntilExit()
-            return String(data: pipe.fileHandleForReading.readDataToEndOfFile(),
-                          encoding: .utf8) ?? ""
+            return String(data: data, encoding: .utf8) ?? ""
         }.value
     }
 
@@ -205,32 +218,65 @@ final class EspansoProcessManager: ObservableObject {
         proc.arguments = ["espanso"]
         let pipe = Pipe()
         proc.standardOutput = pipe
-        try? proc.run()
+        do {
+            try proc.run()
+        } catch {
+            return nil
+        }
+        // Read before waiting — see run(_:) for why this order matters.
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
         proc.waitUntilExit()
-        let path = String(data: pipe.fileHandleForReading.readDataToEndOfFile(),
-                          encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let path = String(data: data, encoding: .utf8)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return path.isEmpty ? nil : path
     }
 
     /// Discover espanso's match directory by running `espanso path`.
-    /// Falls back to the known macOS default if binary is absent or output is unparseable.
-    static func resolveMatchDirectory() async -> URL {
+    /// Falls back to the known macOS default if the binary is absent, the
+    /// output is unparseable, or the binary doesn't answer within `timeout`.
+    static func resolveMatchDirectory(
+        espansoPath: String? = nil,
+        timeout: TimeInterval = 3
+    ) async -> URL {
         let defaultPath = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Application Support/espanso/match")
 
-        guard let espanso = locateEspanso() else { return defaultPath }
+        guard let espanso = espansoPath ?? locateEspanso() else { return defaultPath }
 
-        let output = await Task.detached(priority: .userInitiated) {
-            let proc = Process()
-            proc.executableURL = URL(fileURLWithPath: espanso)
-            proc.arguments = ["path"]
-            let pipe = Pipe()
-            proc.standardOutput = pipe
-            try? proc.run()
-            proc.waitUntilExit()
-            return String(data: pipe.fileHandleForReading.readDataToEndOfFile(),
-                          encoding: .utf8) ?? ""
-        }.value
+        let proc = Process()
+        proc.executableURL = URL(fileURLWithPath: espanso)
+        proc.arguments = ["path"]
+        let pipe = Pipe()
+        proc.standardOutput = pipe
+        do {
+            try proc.run()
+        } catch {
+            return defaultPath
+        }
+        let pid = proc.processIdentifier
+
+        // Race the read against the deadline. On timeout, kill the child so the
+        // reader sees EOF and the group can finish — a task group cannot return
+        // while a child is still blocked in read().
+        let output: String = await withTaskGroup(of: String?.self) { group in
+            group.addTask {
+                let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                proc.waitUntilExit()
+                return String(data: data, encoding: .utf8) ?? ""
+            }
+            group.addTask {
+                try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
+                guard !Task.isCancelled else { return nil }
+                kill(pid, SIGKILL)
+                return nil
+            }
+            var result = ""
+            for await value in group {
+                if let value { result = value }
+                group.cancelAll()   // reader won → stop the sleeper promptly
+            }
+            return result
+        }
 
         // espanso path output (v2.x):
         //   Config:   /Users/jeff/Library/Application Support/espanso
