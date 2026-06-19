@@ -229,7 +229,7 @@
       --shadow-lg: 0 30px 64px -28px rgba(24, 53, 35, 0.40);
       --radius: 14px;
       --hero-glow: rgba(31, 122, 68, 0.16);
-      --grid-line: rgba(22, 39, 28, 0.05);
+      --hero-glow-2: rgba(28, 116, 96, 0.13);
     }
 
     /* Dark — deep forest ink, luminous emerald */
@@ -251,7 +251,7 @@
         --shadow: 0 12px 34px -16px rgba(0, 0, 0, 0.7);
         --shadow-lg: 0 30px 64px -26px rgba(0, 0, 0, 0.78);
         --hero-glow: rgba(69, 204, 125, 0.18);
-        --grid-line: rgba(231, 239, 233, 0.05);
+        --hero-glow-2: rgba(64, 200, 168, 0.15);
       }
     }
 
@@ -330,30 +330,31 @@
       gap: 20px;
     }
 
-    /* Layered emerald glow + fade to page background */
+    /* Base wash: soft top glow fading into the page background */
     .hero::before {
       content: "";
       position: absolute;
       inset: 0;
       z-index: -2;
       background:
-        radial-gradient(60% 48% at 50% -6%, var(--hero-glow), transparent 72%),
-        radial-gradient(40% 34% at 82% 8%, var(--accent-soft), transparent 70%),
-        linear-gradient(180deg, var(--surface), var(--bg) 64%);
+        radial-gradient(58% 46% at 50% -8%, var(--hero-glow), transparent 72%),
+        linear-gradient(180deg, var(--surface), var(--bg) 66%);
     }
 
-    /* Faint grid, masked to the top centre so it never competes with content */
+    /* Aurora mesh — asymmetric green/teal fields for organic atmosphere,
+       masked so it dissolves before reaching the content and screenshot. */
     .hero::after {
       content: "";
       position: absolute;
       inset: 0;
       z-index: -1;
-      background-image:
-        linear-gradient(var(--grid-line) 1px, transparent 1px),
-        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-      background-size: 34px 34px;
-      -webkit-mask-image: radial-gradient(62% 60% at 50% 0%, #000, transparent 76%);
-      mask-image: radial-gradient(62% 60% at 50% 0%, #000, transparent 76%);
+      background:
+        radial-gradient(38% 44% at 12% 2%, var(--hero-glow-2), transparent 60%),
+        radial-gradient(42% 40% at 90% 0%, var(--accent-soft), transparent 62%),
+        radial-gradient(44% 52% at 74% 34%, var(--hero-glow-2), transparent 66%),
+        radial-gradient(40% 48% at 24% 30%, var(--accent-soft), transparent 66%);
+      -webkit-mask-image: linear-gradient(180deg, #000 48%, transparent 90%);
+      mask-image: linear-gradient(180deg, #000 48%, transparent 90%);
     }
 
     .hero-eyebrow {
