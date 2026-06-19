@@ -8,9 +8,12 @@
   <meta name="theme-color" content="#0d1117" media="(prefers-color-scheme: dark)" />
 
   <!-- Primary SEO -->
-  <title>macspanso — Native espanso GUI for macOS</title>
-  <meta name="description" content="macspanso is a free, open-source macOS menu bar app for managing espanso text expansion matches. Create, edit, and organise triggers without touching YAML." />
-  <meta name="keywords" content="espanso, macOS, text expander, text expansion, GUI, menu bar, YAML, macspanso, Homebrew, SwiftUI" />
+  <title>macspanso — Native espanso GUI &amp; match editor for macOS</title>
+  <meta name="description" content="macspanso is a free, open-source macOS menu bar app and GUI editor for espanso text expansion. Create, edit, search, and organise espanso matches — no YAML editing required." />
+  <meta name="keywords" content="espanso GUI, espanso editor, espanso mac app, espanso match manager, text expander macOS, text expansion, espanso GUI macOS, macspanso, espanso without YAML, Homebrew" />
+  <meta name="author" content="Jeff Caldwell" />
+  <meta name="application-name" content="macspanso" />
+  <meta name="apple-mobile-web-app-title" content="macspanso" />
   <link rel="canonical" href="https://jeffcaldwellca.github.io/macspanso/" />
 
   <!-- Favicons -->
@@ -35,21 +38,145 @@
   <meta name="twitter:description" content="A free, open-source macOS menu bar app for managing espanso text expansion matches — no YAML editing required." />
   <meta name="twitter:image" content="https://jeffcaldwellca.github.io/macspanso/og-image.png" />
 
-  <!-- JSON-LD structured data -->
+  <!-- JSON-LD: SoftwareApplication -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "macspanso",
+    "alternateName": "macspanso — espanso GUI for macOS",
     "softwareVersion": "1.4.0",
     "operatingSystem": "macOS 13+",
     "applicationCategory": "UtilitiesApplication",
+    "applicationSubCategory": "Text Expander",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
     "url": "https://jeffcaldwellca.github.io/macspanso/",
     "downloadUrl": "https://github.com/jeffcaldwellca/macspanso/releases/latest",
+    "softwareHelp": "https://github.com/jeffcaldwellca/macspanso#readme",
+    "releaseNotes": "https://github.com/jeffcaldwellca/macspanso/blob/main/CHANGELOG.md",
     "license": "https://opensource.org/licenses/MIT",
+    "datePublished": "2026-04-20",
+    "image": "https://jeffcaldwellca.github.io/macspanso/og-image.png",
     "screenshot": "https://jeffcaldwellca.github.io/macspanso/screenshot.png",
+    "creator": {
+      "@type": "Person",
+      "name": "Jeff Caldwell",
+      "url": "https://github.com/jeffcaldwellca"
+    },
+    "featureList": [
+      "Create espanso matches without editing YAML",
+      "Form matches with fill-in placeholders",
+      "Date, shell, clipboard, and random variables",
+      "Multi-trigger and regex matches",
+      "File tree view of match files",
+      "External edit detection",
+      "Menu bar controls for espanso",
+      "Instant search across matches"
+    ],
     "description": "A native macOS menu bar app for managing espanso text expansion matches — no YAML editing required."
+  }
+  </script>
+
+  <!-- JSON-LD: HowTo (install) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to install macspanso",
+    "description": "Install macspanso, the native macOS GUI for espanso, using Homebrew.",
+    "totalTime": "PT2M",
+    "step": [
+      {
+        "@type": "HowToStep",
+        "name": "Install Homebrew",
+        "text": "If you don't already have Homebrew, install it from brew.sh.",
+        "url": "https://brew.sh"
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Install macspanso",
+        "text": "Run: brew install --cask jeffcaldwellca/tap/macspanso. Homebrew installs espanso automatically if it isn't already present."
+      },
+      {
+        "@type": "HowToStep",
+        "name": "Open macspanso",
+        "text": "Launch macspanso from your Applications folder. It appears in the menu bar and reads your espanso match directory automatically."
+      }
+    ]
+  }
+  </script>
+
+  <!-- JSON-LD: FAQPage -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is macspanso?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "macspanso is a free, open-source macOS menu bar app that gives espanso a native graphical interface. It reads and writes the same YAML match files espanso uses, so you can create, edit, search, and organise text-expansion matches without touching a text editor or the terminal."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is macspanso free?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. macspanso is completely free and open source under the MIT license. There is no paid tier, no account, and no telemetry."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Where are my matches stored?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "macspanso edits the same YAML files espanso reads — typically ~/Library/Application Support/espanso/match/. Nothing is moved, copied, or duplicated; we just give you a nicer way to edit those files."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Will macspanso conflict with editing config files directly?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. macspanso watches the espanso config directory and detects external edits. If a file changes while macspanso has it open, a banner gives you the choice to reload from disk or keep your in-app changes."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does it work with espanso's iCloud / Dropbox sync?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes — macspanso operates on whatever path espanso is configured to use. If you've moved your match folder into iCloud Drive or another sync provider, macspanso will edit the synced files in place."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does macspanso send anything over the network?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. The app reads and writes local YAML files and controls the local espanso process. There is no telemetry, no analytics, and no network calls."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I uninstall macspanso?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "If you installed via Homebrew: brew uninstall --cask jeffcaldwellca/tap/macspanso. If you installed via .dmg: drag macspanso from /Applications to the Trash. Your espanso matches are not affected — they live in espanso's config directory and stay put."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is macspanso open source?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes — MIT licensed. View the source on GitHub, file an issue, or open a pull request."
+        }
+      }
+    ]
   }
   </script>
 
@@ -88,6 +215,8 @@
       --green-bg: #dafbe1;
       --shadow: 0 8px 24px rgba(140, 149, 159, 0.2);
       --radius: 12px;
+      --hero-glow: rgba(9, 105, 218, 0.10);
+      --grid-line: rgba(27, 35, 40, 0.045);
     }
 
     /* Dark theme */
@@ -105,6 +234,8 @@
         --green: #3fb950;
         --green-bg: rgba(63, 185, 80, 0.15);
         --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        --hero-glow: rgba(47, 129, 247, 0.14);
+        --grid-line: rgba(230, 237, 243, 0.045);
       }
     }
 
@@ -144,12 +275,40 @@
 
     /* ── Hero ── */
     .hero {
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      padding: 72px 24px 48px;
+      padding: 80px 24px 48px;
       gap: 20px;
+    }
+
+    /* Soft accent glow + fade to page background */
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      background:
+        radial-gradient(70% 55% at 50% -8%, var(--hero-glow), transparent 70%),
+        linear-gradient(180deg, var(--surface), var(--bg) 62%);
+    }
+
+    /* Faint grid, masked to the top centre so it never competes with content */
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 34px 34px;
+      -webkit-mask-image: radial-gradient(62% 60% at 50% 0%, #000, transparent 76%);
+      mask-image: radial-gradient(62% 60% at 50% 0%, #000, transparent 76%);
     }
 
     .hero-logo {
@@ -271,6 +430,63 @@
       color: var(--muted);
       max-width: 600px;
       margin: 0 auto 32px;
+    }
+
+    /* ── How it works ── */
+    .how-steps {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 640px) {
+      .how-steps { grid-template-columns: 1fr; }
+    }
+
+    .how-step {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+    }
+
+    .how-step .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 99px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+    }
+
+    .how-step h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0 0 6px;
+    }
+
+    .how-step p {
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .how-step code {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      white-space: nowrap;
     }
 
     /* ── Features ── */
@@ -521,10 +737,12 @@
 </head>
 <body>
 
+  <main id="content">
+
   <!-- Hero -->
-  <section class="hero">
+  <section class="hero" aria-labelledby="page-title">
     <img class="hero-logo" src="logo-192.png" srcset="logo-192.png 1x, logo.png 2x" width="96" height="96" alt="" />
-    <h1>macspanso</h1>
+    <h1 id="page-title">macspanso</h1>
     <p class="hero-tag">
       Editing <code>match/base.yml</code> shouldn't require a text editor.
       A native macOS menu bar app for managing
@@ -557,16 +775,39 @@
     <p class="hero-note">Homebrew automatically installs espanso if it isn't already present.</p>
   </section>
 
-  <!-- Hero screenshot. The wrapper is hidden until docs/screenshot.png exists. -->
-  <!-- TODO: drop a real app screenshot at docs/screenshot.png (recommended ~1600x1000, 2x retina). -->
+  <!-- Hero screenshot. The wrapper is hidden until the image loads, so a missing file degrades gracefully. -->
+  <!-- docs/screenshot.png is a styled mockup; swap in a real ~1600x1000 (2x retina) app capture anytime. -->
   <figure class="hero-shot" id="heroShot" hidden>
     <img src="screenshot.png" alt="macspanso main window: file tree on the left, list of espanso matches with triggers and replacements on the right" loading="eager" onload="document.getElementById('heroShot').hidden = false" onerror="this.parentElement.remove()" />
   </figure>
 
+  <!-- How it works -->
+  <section class="section" aria-labelledby="how-h" style="padding-bottom: 24px;">
+    <h2 id="how-h">How it works</h2>
+    <p class="section-lead">From zero to your first text expansion in about two minutes.</p>
+    <ol class="how-steps">
+      <li class="how-step">
+        <span class="step-num">1</span>
+        <h3>Install</h3>
+        <p>Run <code>brew install --cask jeffcaldwellca/tap/macspanso</code> — Homebrew pulls in espanso too.</p>
+      </li>
+      <li class="how-step">
+        <span class="step-num">2</span>
+        <h3>Open the manager</h3>
+        <p>macspanso lives in the menu bar. Click its icon and choose <strong>Open Match Manager</strong>.</p>
+      </li>
+      <li class="how-step">
+        <span class="step-num">3</span>
+        <h3>Add a match</h3>
+        <p>Type a trigger and its replacement, hit save, and espanso expands it everywhere.</p>
+      </li>
+    </ol>
+  </section>
+
   <!-- Features -->
-  <section class="section" style="padding-top: 24px;">
-    <h2>What it does</h2>
-    <p class="section-lead">A small native app for the parts of espanso you actually touch every day.</p>
+  <section class="section" aria-labelledby="features-h" style="padding-top: 24px;">
+    <h2 id="features-h">What it does</h2>
+    <p class="section-lead"><strong>macspanso</strong> is a free, open-source, native macOS menu bar app for managing <a href="https://espanso.org" target="_blank" rel="noopener noreferrer">espanso</a> text expansions — a focused GUI for the parts of espanso you actually touch every day.</p>
     <div class="features">
       <div class="feature-card">
         <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-pencil"/></svg></span>
@@ -612,8 +853,8 @@
   </section>
 
   <!-- Install -->
-  <section class="section" id="install" style="padding-top: 0;">
-    <h2>Installation</h2>
+  <section class="section" id="install" aria-labelledby="install-h" style="padding-top: 0;">
+    <h2 id="install-h">Installation</h2>
     <p class="section-lead">Currently on <strong>v1.4.0</strong> — see the <a href="https://github.com/jeffcaldwellca/macspanso/blob/main/CHANGELOG.md">changelog</a> for what's new.</p>
 
     <div class="reqs">
@@ -640,9 +881,21 @@
   </section>
 
   <!-- FAQ -->
-  <section class="section" style="padding-top: 0;">
-    <h2>Frequently asked</h2>
+  <section class="section" aria-labelledby="faq-h" style="padding-top: 0;">
+    <h2 id="faq-h">Frequently asked</h2>
     <div class="faq-list">
+      <details class="faq-item">
+        <summary>What is macspanso?</summary>
+        <div class="faq-body">
+          <p>macspanso is a free, open-source macOS menu bar app that gives espanso a native graphical interface. It reads and writes the same YAML match files espanso uses, so you can create, edit, search, and organise text-expansion matches without touching a text editor or the terminal.</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary>Is macspanso free?</summary>
+        <div class="faq-body">
+          <p>Yes. macspanso is completely free and open source under the MIT license. There is no paid tier, no account, and no telemetry.</p>
+        </div>
+      </details>
       <details class="faq-item">
         <summary>Where are my matches stored?</summary>
         <div class="faq-body">
@@ -668,14 +921,14 @@
         </div>
       </details>
       <details class="faq-item">
-        <summary>How do I uninstall it?</summary>
+        <summary>How do I uninstall macspanso?</summary>
         <div class="faq-body">
           <p>If you installed via Homebrew: <code>brew uninstall --cask jeffcaldwellca/tap/macspanso</code>.</p>
           <p>If you installed via .dmg: drag macspanso from <code>/Applications</code> to the Trash. Your espanso matches are not affected — they live in espanso's config directory and stay put.</p>
         </div>
       </details>
       <details class="faq-item">
-        <summary>Is it open source?</summary>
+        <summary>Is macspanso open source?</summary>
         <div class="faq-body">
           <p>Yes — MIT licensed. <a href="https://github.com/jeffcaldwellca/macspanso">View the source on GitHub</a>, file an issue, or open a PR.</p>
         </div>
@@ -683,15 +936,17 @@
     </div>
   </section>
 
+  </main>
+
   <!-- Footer -->
   <footer>
-    <div class="footer-links">
+    <nav class="footer-links" aria-label="Footer">
       <a href="https://github.com/jeffcaldwellca/macspanso" target="_blank" rel="noopener noreferrer">GitHub</a>
       <a href="https://github.com/jeffcaldwellca/macspanso/releases">Releases</a>
       <a href="https://github.com/jeffcaldwellca/macspanso/blob/main/CHANGELOG.md">Changelog</a>
       <a href="https://github.com/jeffcaldwellca/macspanso/issues">Issues</a>
       <a href="https://github.com/jeffcaldwellca/macspanso/blob/main/LICENSE">License</a>
-    </div>
+    </nav>
     <div class="footer-meta">macspanso v1.4.0 · MIT licensed · Made for the espanso community.</div>
   </footer>
 
