@@ -316,6 +316,8 @@
       height: 96px;
       border-radius: 22px;
       box-shadow: var(--shadow);
+      background: #fff;
+      border: 1px solid var(--border);
     }
 
     .hero h1 {
@@ -448,6 +450,7 @@
 
     .how-step {
       position: relative;
+      min-width: 0;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
@@ -486,7 +489,6 @@
       padding: 1px 6px;
       border-radius: 4px;
       font-size: 0.85em;
-      white-space: nowrap;
     }
 
     /* ── Features ── */
@@ -741,7 +743,7 @@
 
   <!-- Hero -->
   <section class="hero" aria-labelledby="page-title">
-    <img class="hero-logo" src="logo-192.png" srcset="logo-192.png 1x, logo.png 2x" width="96" height="96" alt="" />
+    <img class="hero-logo" src="logo-192.png" width="96" height="96" alt="" />
     <h1 id="page-title">macspanso</h1>
     <p class="hero-tag">
       Editing <code>match/base.yml</code> shouldn't require a text editor.
@@ -789,7 +791,7 @@
       <li class="how-step">
         <span class="step-num">1</span>
         <h3>Install</h3>
-        <p>Run <code>brew install --cask jeffcaldwellca/tap/macspanso</code> — Homebrew pulls in espanso too.</p>
+        <p>Run a single <code>brew install</code> command — Homebrew pulls in espanso too.</p>
       </li>
       <li class="how-step">
         <span class="step-num">2</span>
