@@ -4,7 +4,7 @@ A macOS menu bar app for managing [espanso](https://espanso.org) text expansion 
 
 ![macOS 13+](https://img.shields.io/badge/macOS-13%2B-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
-**🌐 Website & downloads → [jeffcaldwellca.github.io/macspanso](https://jeffcaldwellca.github.io/macspanso/)**
+**🌐 Website & downloads → [www.jeffcaldwell.ca/macspanso](https://www.jeffcaldwell.ca/macspanso/)**
 
 ---
 
