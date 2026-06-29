@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.4.1] - 2026-06-28
+
+### Fixed
+- **Match Manager sometimes didn't open after switching displays** — opening Match Manager from the menu bar could silently do nothing, most often right after disconnecting an external monitor or switching to the built-in display. A display change can leave the window straddling a screen edge with only a sliver on screen; the previous check treated any overlap as "visible", so the window was ordered front where you couldn't see it. It now recenters unless a real portion of the window is reachable on a current display, and the app is brought forward more reliably as a menu-bar (accessory) app.
+
 ## [1.4.0] - 2026-06-10
 
 ### Fixed

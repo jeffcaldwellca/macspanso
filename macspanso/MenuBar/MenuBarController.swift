@@ -224,16 +224,23 @@ final class MenuBarController: NSObject, NSMenuDelegate {
             )
             windowController = wc
         }
-        if #available(macOS 14.0, *) {
-            NSApp.activate()
-        } else {
-            NSApp.activate(ignoringOtherApps: true)
-        }
+        // Deliberately the deprecated explicit form, not the no-argument
+        // NSApp.activate() added in macOS 14: for an accessory (LSUIElement) app
+        // the cooperative no-arg variant can silently no-op when another app
+        // won't yield activation — which is common right after a display change,
+        // leaving the window ordered front but never brought forward.
+        NSApp.activate(ignoringOtherApps: true)
         if let window = windowController?.window {
-            // Display changes (docking, disconnected monitors) can leave the window
-            // at coordinates no current screen covers — recenter if so.
-            let onScreen = NSScreen.screens.contains { $0.frame.intersects(window.frame) }
-            if !onScreen { window.center() }
+            // Display changes (undocking, disconnected monitors) can leave the
+            // window straddling a screen edge or fully off-screen. Recenter
+            // unless a real fraction of it is reachable on a current display —
+            // a bare `intersects` check passes on a 1px sliver and the window
+            // looks like it never opened.
+            let visibleFrames = NSScreen.screens.map { $0.visibleFrame }
+            if MatchManagerWindowController.placement(forFrame: window.frame,
+                                                      visibleFrames: visibleFrames) == .recenter {
+                window.center()
+            }
             window.makeKeyAndOrderFront(nil)
         }
         switch focus {

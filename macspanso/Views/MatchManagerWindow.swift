@@ -40,6 +40,30 @@ final class MatchManagerWindowController: NSWindowController {
 
     required init?(coder: NSCoder) { fatalError("not used") }
 
+    enum WindowPlacement: Equatable { case keep, recenter }
+
+    /// Decide whether a window at `frame` is reachable on the current displays,
+    /// or should be recentered. Pure so it can be unit-tested without real
+    /// screens.
+    ///
+    /// `frame.intersects(screen)` is too weak: it's true for even a 1px overlap,
+    /// so a window left straddling a screen edge after undocking passes it and
+    /// gets ordered front effectively off-screen. Instead we require at least
+    /// `minVisibleFraction` of the window's area to fall within a single screen's
+    /// visible frame; otherwise the user can't reach it and we recenter.
+    static func placement(forFrame frame: CGRect,
+                          visibleFrames: [CGRect],
+                          minVisibleFraction: CGFloat = 0.5) -> WindowPlacement {
+        let windowArea = frame.width * frame.height
+        guard windowArea > 0 else { return .recenter }
+        let bestOverlapArea = visibleFrames.reduce(CGFloat(0)) { best, screen in
+            let overlap = screen.intersection(frame)
+            guard !overlap.isNull else { return best }
+            return max(best, overlap.width * overlap.height)
+        }
+        return bestOverlapArea >= windowArea * minVisibleFraction ? .keep : .recenter
+    }
+
     func focusNewMatch() {
         postDelayed(.focusNewMatch)
     }
