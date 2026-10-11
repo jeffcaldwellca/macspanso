@@ -28,6 +28,19 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
 
+      # ── Version check ──────────────────────────────────────────────────────
+      # The app compares its own version to the release tag to decide whether
+      # an update exists; a tag that doesn't match the built version would make
+      # every install report an update forever.
+
+      - name: Check tag matches app version
+        run: |
+          APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" macspanso/App/Info.plist)
+          if [ "v$APP_VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match app version $APP_VERSION (project.yml)."
+            exit 1
+          fi
+
       # ── Tests ──────────────────────────────────────────────────────────────
       # Never ship a tag whose tests don't pass.
 

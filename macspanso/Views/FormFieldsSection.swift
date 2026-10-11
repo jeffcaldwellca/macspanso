@@ -225,9 +225,15 @@ struct FormFieldCard: View {
 
     private func switchToDropdown(_ dropdown: Bool) {
         if dropdown {
-            field = .dropdown(field.values ?? [""])
+            guard !field.isDropdown else { return }   // keep an existing `list` kind
+            // Mutate in place rather than build a new field, so keys the
+            // editor doesn't model (`extras`) aren't dropped by the switch.
+            field.type = .choice
+            field.values = field.values ?? [""]
+            field.multiline = nil
         } else {
-            field = FormField(default: field.default, multiline: nil)
+            field.type = nil
+            field.values = nil
         }
     }
 }

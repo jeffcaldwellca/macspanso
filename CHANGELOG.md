@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.5.0] - 2026-10-10
+
+### Fixed
+- **Files using `choice` variables, form variables, or list fields failed to load** — a single `type: choice` variable, a form variable with `fields:`, or a `form_fields` entry with `type: list` made the whole file show as a parse error and hid every match in it. These now load, and are written back unchanged.
+- **A file that couldn't be read could be overwritten** — when the only match file failed to parse, the app showed "No matches yet" with starter buttons, and using one (or New Match, or the New Match From Clipboard shortcut) replaced the file's contents. macspanso now never writes to a file it couldn't read, and shows which files failed and why instead of the empty state.
+- **Saving rewrote the whole file** — comments were deleted, multi-line replacements were collapsed into one escaped line, and emoji and accented characters were turned into escape codes. Saves now edit the file in place: everything you didn't change is kept exactly as written, including comments, blank lines and top-level sections. Comments directly above a match stay with it. (Comments inside the one match you edit are still lost, and files with Windows line endings or an inline `matches: [...]` list are still rewritten in full.)
+- **Variable options were dropped on save** — `depends_on`, `inject_vars` and other variable-level keys are now preserved.
+- **External edits could be silently overwritten** — saving in the app after a file changed on disk wrote the app's older copy over it. Saves to a changed file are now refused until you choose Reload or Keep Mine, every changed file gets its own prompt (previously only the last one did), and a file deleted outside the app is removed from the list instead of being reported as changed.
+- **Snooze never turned espanso back on, and the Enabled toggle could only disable** — `espanso status` doesn't report whether expansion is enabled, so the app could never tell it was disabled. macspanso now keeps its own record of the last enable/disable it sent. A toggle made with espanso's own hotkey or menu isn't visible to macspanso.
+- **Restore could leave you with no matches** — restoring a snapshot or importing with Replace deleted the current files before checking the backup was readable, and carried on even if the safety snapshot failed. The backup is now verified and the snapshot must succeed before anything is deleted. `.yaml` files are now included, Merge also takes a snapshot first, and backing up a very large match folder can no longer hang.
+- **Regex matches with named groups couldn't be saved** — `(?P<name>…)` with `{{name}}` in the replacement, the example from espanso's own docs, was rejected as an undeclared variable, and the regex tester called the pattern invalid.
+- **Matches with a cross-file trigger conflict couldn't be edited** — a trigger also defined in another file blocked saving entirely. It is now a warning; only a duplicate in the same file blocks saving.
+- **Unsaved edits were discarded without warning** — selecting another match, switching tabs, pressing +, or closing the window now asks first. Cancel on an existing match now reverts your changes instead of doing nothing.
+- **New File…** — the destination picker no longer goes blank after choosing a new file, `.yaml` names are kept, and locations outside the espanso match folder (which espanso never loads) are refused.
+- **Matches with no replacement could be saved**, and the New Match From Clipboard shortcut accepted empty or duplicate triggers.
+
+### Added
+- **Global shortcuts** — turn on "Global Shortcuts" in the menu to open the Match Manager (⌃⌥⌘M) or start a new match (⌃⌥⌘N) from any app. Off by default.
+- **Search covers alternate triggers** — the match list and quick switcher now search every trigger on a multi-trigger match, and regex patterns.
+
+### Improved
+- **Lower background activity** — espanso's status is checked every 30 seconds instead of every 5, and whenever the menu opens. A hung espanso command is stopped instead of piling up.
+- **Bulk delete and move** write each affected file once instead of once per match.
+- **Uninstall cleanup** — the Homebrew cask's `zap` now removes the right preferences file and the snapshots folder.
+- **Release safety** — the release pipeline refuses a tag that doesn't match the app's version; the test suite now covers every write path, including in-place saves, external edits and restores.
+
 ## [1.4.1] - 2026-06-28
 
 ### Fixed

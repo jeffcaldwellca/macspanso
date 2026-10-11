@@ -109,6 +109,18 @@ public struct EspansoMatch: Identifiable, Codable, Equatable {
         trigger ?? triggers?.first ?? regex ?? "(no trigger)"
     }
 
+    /// Every literal trigger on this match (`trigger:` plus all of `triggers:`).
+    public var allTriggers: [String] {
+        (trigger.map { [$0] } ?? []) + (triggers ?? [])
+    }
+
+    /// Whether `query` appears in any trigger (alternates included), the
+    /// regex, the label, or the replacement. Case- and locale-insensitive.
+    public func matches(searchText query: String) -> Bool {
+        (allTriggers + [regex ?? "", label ?? "", replacementPreview])
+            .contains { $0.localizedCaseInsensitiveContains(query) }
+    }
+
     // Convenience: a short preview of the replacement for display
     public var replacementPreview: String {
         (replace ?? form ?? "").trimmingCharacters(in: .whitespacesAndNewlines)

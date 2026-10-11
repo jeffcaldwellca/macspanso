@@ -105,4 +105,46 @@ extension MatchValidationTests {
             m, existingMatches: [], globalVarNames: ["city"])
         XCTAssertEqual(errors, [.unresolvedVarReference("nope")])
     }
+
+    // MARK: - Regex named groups
+
+    func testRegexNamedGroupsAreValidReferences() {
+        // The example from espanso's own docs.
+        let match = EspansoMatch(regex: #":greet\((?P<person>.*)\)"#, replace: "Hi {{person}}!")
+        XCTAssertEqual(MatchValidator.validate(match, existingMatches: []), [])
+
+        let unknown = EspansoMatch(regex: "(?<a>x)", replace: "{{a}} {{b}}")
+        XCTAssertEqual(MatchValidator.validate(unknown, existingMatches: []),
+                       [.unresolvedVarReference("b")])
+    }
+
+    func testEspansoRegexCompilesForInAppTester() throws {
+        let pattern = MatchValidator.icuPattern(fromEspansoRegex: #":greet\((?P<person>.*)\)"#)
+        let regex = try NSRegularExpression(pattern: pattern)
+        let input = ":greet(Jeff)"
+        XCTAssertEqual(regex.numberOfMatches(in: input, range: NSRange(input.startIndex..., in: input)), 1)
+    }
+
+    // MARK: - Replacement required
+
+    func testMatchWithoutAnyReplacementIsInvalid() {
+        let match = EspansoMatch(trigger: "::x")
+        XCTAssertEqual(MatchValidator.validate(match, existingMatches: []), [.emptyReplacement])
+    }
+
+    func testUnmodelledReplacementKindsCountAsAReplacement() {
+        var image = EspansoMatch(trigger: "::img")
+        image.extras["image_path"] = .string("/tmp/a.png")
+        XCTAssertEqual(MatchValidator.validate(image, existingMatches: []), [])
+    }
+
+    // MARK: - Search
+
+    func testSearchCoversAlternateTriggersLabelAndReplacement() {
+        let match = EspansoMatch(triggers: ["::first", "::Second"], replace: "Body text", label: "My Label")
+        XCTAssertTrue(match.matches(searchText: "second"), "alternate triggers must be searchable")
+        XCTAssertTrue(match.matches(searchText: "label"))
+        XCTAssertTrue(match.matches(searchText: "BODY"))
+        XCTAssertFalse(match.matches(searchText: "nope"))
+    }
 }

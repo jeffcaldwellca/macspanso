@@ -1,5 +1,5 @@
 cask "macspanso" do
-  version "1.4.1"
+  version "1.5.0"
   sha256 "PLACEHOLDER_UPDATED_BY_RELEASE_WORKFLOW"
 
   url "https://github.com/jeffcaldwellca/macspanso/releases/download/v#{version}/macspanso-#{version}.dmg"
@@ -12,6 +12,7 @@ cask "macspanso" do
   app "macspanso.app"
 
   zap trash: [
-    "~/Library/Preferences/com.macspanso.plist",
+    "~/Library/Application Support/macspanso",
+    "~/Library/Preferences/com.macspanso.macspanso.plist",
   ]
 end

@@ -6,9 +6,18 @@ import Combine
 final class EspansoConfigStore: ObservableObject {
     @Published var matchFiles: [MatchFile] = []
 
-    /// Non-nil when a watched file changes externally while the window is open.
-    /// Set to nil after the user responds to the reload banner.
-    @Published var externallyChangedURL: URL? = nil
+    /// Files changed on disk that the user hasn't yet chosen to reload or keep,
+    /// oldest first. Writes to these are refused until the choice is made, so a
+    /// save can't silently replace an external edit with stale in-memory content.
+    @Published private(set) var externallyChangedURLs: [URL] = []
+
+    /// The change the reload banner is currently asking about.
+    var externallyChangedURL: URL? { externallyChangedURLs.first }
+
+    /// Modification date of each file as last read or written by this store.
+    /// A different date on disk means someone else changed it — this catches
+    /// edits the watcher missed (events are suppressed around our own writes).
+    private var knownModDates: [URL: Date] = [:]
 
     let matchDirectory: URL
     private let watcher = FileWatcher()
@@ -48,6 +57,8 @@ final class EspansoConfigStore: ObservableObject {
 
     func load() {
         watcher.stopAll()   // clear stale watches if load() is called more than once
+        externallyChangedURLs = []
+        knownModDates = [:]
         let urls = scanMatchDirectory()
         matchFiles = urls.map { loadFile(at: $0) }
         // Watch every directory in the tree: a dispatch source on the root
@@ -58,7 +69,7 @@ final class EspansoConfigStore: ObservableObject {
     }
 
     /// espanso v2 loads both extensions.
-    private static let matchExtensions: Set<String> = ["yml", "yaml"]
+    static let matchExtensions: Set<String> = ["yml", "yaml"]
 
     private func scanMatchDirectory() -> [URL] {
         guard let enumerator = FileManager.default.enumerator(
@@ -92,6 +103,7 @@ final class EspansoConfigStore: ObservableObject {
         // Anchor package detection to the known config root rather than global path search.
         let relative = url.path.replacingOccurrences(of: matchDirectory.path, with: "")
         let isPackage = relative.hasPrefix("/packages/")
+        knownModDates[url] = Self.modDate(of: url)
         do {
             let content = try YAMLSerializer.decodeContent(contentsOf: url)
             var matches = content.matches ?? []
@@ -139,6 +151,64 @@ final class EspansoConfigStore: ObservableObject {
         return MatchFileContent(matches: matches, extras: extras)
     }
 
+    nonisolated private static func modDate(of url: URL) -> Date? {
+        (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
+    }
+
+    /// A file can exist on disk without the store knowing it: created while
+    /// directory events were suppressed around one of our own writes, or in a
+    /// match folder that didn't exist at launch. Load it before writing "to a
+    /// new file" at that path, which would replace whatever it holds.
+    private func adoptIfOnDiskButUnknown(_ url: URL) {
+        guard !matchFiles.contains(where: { $0.url == url }),
+              FileManager.default.fileExists(atPath: url.path)
+        else { return }
+        matchFiles.append(loadFile(at: url))
+        matchFiles.sort { $0.url.path < $1.url.path }
+        watcher.watch(url: url)
+    }
+
+    /// The single funnel for every write. Refuses when the file has changed on
+    /// disk since it was last read and the user hasn't resolved that yet.
+    private func write(_ matches: [EspansoMatch], to url: URL) throws {
+        // Backstop for the case `adoptIfOnDiskButUnknown` exists to prevent.
+        if !matchFiles.contains(where: { $0.url == url }),
+           FileManager.default.fileExists(atPath: url.path) {
+            throw NSError(
+                domain: "macspanso.write",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey:
+                    "\(url.lastPathComponent) already exists but hasn't been loaded, so nothing was written to it."]
+            )
+        }
+        if !externallyChangedURLs.contains(url),
+           let known = knownModDates[url], let onDisk = Self.modDate(of: url), onDisk != known {
+            externallyChangedURLs.append(url)
+        }
+        if externallyChangedURLs.contains(url) {
+            throw NSError(
+                domain: "macspanso.externalChange",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey:
+                    "\(url.lastPathComponent) was changed outside macspanso. Open the Match Manager and choose Reload or Keep Mine first."]
+            )
+        }
+        try suppressingWatcherEvents(for: url) {
+            // Prefer editing the existing text in place, which keeps the user's
+            // comments and formatting. Regenerating the file is the fallback.
+            if let file = matchFiles.first(where: { $0.url == url }), file.parseError == nil,
+               let original = try? String(contentsOf: url, encoding: .utf8),
+               let patched = YAMLPatcher.patch(original: original,
+                                               oldMatches: file.matches,
+                                               newMatches: matches) {
+                try patched.write(to: url, atomically: true, encoding: .utf8)
+            } else {
+                try YAMLSerializer.write(fileContent(matches, for: url), to: url)
+            }
+        }
+        knownModDates[url] = Self.modDate(of: url)
+    }
+
     /// Registers a write-in-progress for `url` so that the resulting FSEvent is
     /// not mistaken for an external edit. Clears after a short delay to account
     /// for async FSEvent delivery.
@@ -158,6 +228,11 @@ final class EspansoConfigStore: ObservableObject {
                         else { self.writingPaths[p] = count - 1 }
                     }
                 }
+                // Directory events were ignored for the whole window; catch up
+                // on any file another process added or removed meanwhile.
+                if self.writingPaths[self.matchDirectory.path] == nil {
+                    self.handleDirectoryChange()
+                }
             }
         }
         try body()
@@ -166,10 +241,16 @@ final class EspansoConfigStore: ObservableObject {
     /// Save a mutated match list back to the file that owns it.
     func save(matches: [EspansoMatch], in fileID: UUID) throws {
         guard let index = matchFiles.firstIndex(where: { $0.id == fileID }) else { return }
-        let url = matchFiles[index].url
-        try suppressingWatcherEvents(for: url) {
-            try YAMLSerializer.write(fileContent(matches, for: url), to: url)
+        if matchFiles[index].parseError != nil {
+            throw NSError(
+                domain: "macspanso.save",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey:
+                    "\(matchFiles[index].displayName) couldn't be read, so nothing was written to it."]
+            )
         }
+        let url = matchFiles[index].url
+        try write(matches, to: url)
         matchFiles[index].matches = matches
     }
 
@@ -181,9 +262,7 @@ final class EspansoConfigStore: ObservableObject {
                 var updated = matchFiles[i].matches
                 updated[j] = match
                 // Write first; only update in-memory if the write succeeds.
-                try suppressingWatcherEvents(for: url) {
-                    try YAMLSerializer.write(fileContent(updated, for: url), to: url)
-                }
+                try write(updated, to: url)
                 matchFiles[i].matches = updated
                 return
             }
@@ -191,9 +270,11 @@ final class EspansoConfigStore: ObservableObject {
     }
 
     /// Add a new match. Saves to `targetURL` if provided; otherwise to base.yml.
-    /// Creates the file if it doesn't exist. Refuses to write into package files.
+    /// Creates the file if it doesn't exist. Refuses to write into package files
+    /// and files that failed to parse.
     func add(_ match: EspansoMatch, to targetURL: URL? = nil) throws {
         let url = targetURL ?? matchDirectory.appendingPathComponent("base.yml")
+        adoptIfOnDiskButUnknown(url)
         if let existing = matchFiles.first(where: { $0.url == url }), existing.isPackage {
             throw NSError(
                 domain: "macspanso.add",
@@ -201,18 +282,24 @@ final class EspansoConfigStore: ObservableObject {
                 userInfo: [NSLocalizedDescriptionKey: "Cannot add matches to a package file."]
             )
         }
+        // A file that failed to parse is held in memory as empty; writing to it
+        // would replace everything on disk with just this match.
+        if let existing = matchFiles.first(where: { $0.url == url }), existing.parseError != nil {
+            throw NSError(
+                domain: "macspanso.add",
+                code: 2,
+                userInfo: [NSLocalizedDescriptionKey:
+                    "\(existing.displayName) couldn't be read, so nothing was written to it. Fix the file (see the file tree for the error) or choose another file."]
+            )
+        }
         if let index = matchFiles.firstIndex(where: { $0.url == url }) {
             // Write first; only update in-memory if the write succeeds.
             let updatedMatches = matchFiles[index].matches + [match]
-            try suppressingWatcherEvents(for: url) {
-                try YAMLSerializer.write(fileContent(updatedMatches, for: url), to: url)
-            }
+            try write(updatedMatches, to: url)
             matchFiles[index].matches = updatedMatches
         } else {
             // File doesn't exist yet — create it
-            try suppressingWatcherEvents(for: url) {
-                try YAMLSerializer.write(fileContent([match], for: url), to: url)
-            }
+            try write([match], to: url)
             let newFile = MatchFile(url: url, matches: [match], isPackage: false)
             matchFiles.append(newFile)
             matchFiles.sort { $0.url.path < $1.url.path }
@@ -223,6 +310,12 @@ final class EspansoConfigStore: ObservableObject {
     /// Files that the user can write matches into (excludes packages and parse-errored files).
     var writableFiles: [MatchFile] {
         matchFiles.filter { !$0.isPackage && $0.parseError == nil }
+    }
+
+    /// User files that failed to parse. Their matches are invisible to the app,
+    /// so "no matches" must not be presented as an empty config when this is non-empty.
+    var unreadableFiles: [MatchFile] {
+        matchFiles.filter { !$0.isPackage && $0.parseError != nil }
     }
 
     /// One occurrence of a trigger string in a specific match within a specific file.
@@ -302,9 +395,7 @@ final class EspansoConfigStore: ObservableObject {
             var updated = matchFiles[i].matches
             updated.insert(copy, at: j + 1)
             let url = matchFiles[i].url
-            try suppressingWatcherEvents(for: url) {
-                try YAMLSerializer.write(fileContent(updated, for: url), to: url)
-            }
+            try write(updated, to: url)
             matchFiles[i].matches = updated
             return copy
         }
@@ -323,26 +414,28 @@ final class EspansoConfigStore: ObservableObject {
         return "\(first)-\(n)"
     }
 
-    /// Move a match to a different file. Removes from the source file and appends to
-    /// the destination file, writing both. No-op if the match is already in `targetURL`.
+    /// Move a match to a different file. No-op if the match is already in `targetURL`.
     /// Refuses to move into package files or files with parse errors.
     func move(matchID: UUID, to targetURL: URL) throws {
-        // Locate the source file and match
-        guard let sourceIndex = matchFiles.firstIndex(where: { f in
-                  f.matches.contains(where: { $0.id == matchID })
-              }),
-              let matchIndex = matchFiles[sourceIndex].matches.firstIndex(where: { $0.id == matchID })
-        else {
+        guard let source = file(containing: matchID) else {
             throw NSError(
                 domain: "macspanso.move",
                 code: 1,
                 userInfo: [NSLocalizedDescriptionKey: "Match not found"]
             )
         }
+        guard source.url != targetURL else { return }
+        try move(matchIDs: [matchID], to: targetURL)
+    }
 
-        let sourceURL = matchFiles[sourceIndex].url
-        guard sourceURL != targetURL else { return }
-
+    /// Move several matches into `targetURL`, writing the destination once and
+    /// each source file once. Matches already in the destination are skipped.
+    ///
+    /// The destination is written first, so a failure can only ever leave a
+    /// match in both places, never in neither; a source file that then fails to
+    /// write keeps its matches and they are taken back out of the destination.
+    func move(matchIDs: Set<UUID>, to targetURL: URL) throws {
+        adoptIfOnDiskButUnknown(targetURL)
         if let existing = matchFiles.first(where: { $0.url == targetURL }),
            existing.isPackage || existing.parseError != nil {
             throw NSError(
@@ -352,45 +445,51 @@ final class EspansoConfigStore: ObservableObject {
             )
         }
 
-        let match = matchFiles[sourceIndex].matches[matchIndex]
+        // What each source file keeps, and what leaves it (in file order).
+        var remainingBySource: [URL: [EspansoMatch]] = [:]
+        var moving: [EspansoMatch] = []
+        var sourceOfMoved: [UUID: URL] = [:]
+        for file in matchFiles where file.url != targetURL && !file.isPackage {
+            let leaving = file.matches.filter { matchIDs.contains($0.id) }
+            guard !leaving.isEmpty else { continue }
+            remainingBySource[file.url] = file.matches.filter { !matchIDs.contains($0.id) }
+            moving += leaving
+            leaving.forEach { sourceOfMoved[$0.id] = file.url }
+        }
+        guard !moving.isEmpty else { return }
 
-        // Compose the new state for both files before writing.
-        var newSource = matchFiles[sourceIndex].matches
-        newSource.remove(at: matchIndex)
-
-        // Write source first; if that fails, in-memory state is unchanged.
-        try suppressingWatcherEvents(for: sourceURL) {
-            try YAMLSerializer.write(fileContent(newSource, for: sourceURL), to: sourceURL)
+        let existingDest = matchFiles.first(where: { $0.url == targetURL })?.matches ?? []
+        try write(existingDest + moving, to: targetURL)
+        if let destIndex = matchFiles.firstIndex(where: { $0.url == targetURL }) {
+            matchFiles[destIndex].matches = existingDest + moving
+        } else {
+            matchFiles.append(MatchFile(url: targetURL, matches: moving, isPackage: false))
+            watcher.watch(url: targetURL)
         }
 
-        // Write destination — on failure we restore the source on disk so we don't
-        // silently delete the user's match.
-        do {
-            if let destIndex = matchFiles.firstIndex(where: { $0.url == targetURL }) {
-                var newDest = matchFiles[destIndex].matches
-                newDest.append(match)
-                try suppressingWatcherEvents(for: targetURL) {
-                    try YAMLSerializer.write(fileContent(newDest, for: targetURL), to: targetURL)
-                }
-                matchFiles[destIndex].matches = newDest
-            } else {
-                // Destination file doesn't exist yet — create it.
-                try suppressingWatcherEvents(for: targetURL) {
-                    try YAMLSerializer.write(fileContent([match], for: targetURL), to: targetURL)
-                }
-                let newFile = MatchFile(url: targetURL, matches: [match], isPackage: false)
-                matchFiles.append(newFile)
-                matchFiles.sort { $0.url.path < $1.url.path }
-                watcher.watch(url: targetURL)
+        var firstError: Error?
+        var failedSources: Set<URL> = []
+        for (url, remaining) in remainingBySource {
+            guard let index = matchFiles.firstIndex(where: { $0.url == url }) else { continue }
+            do {
+                try write(remaining, to: url)
+                matchFiles[index].matches = remaining
+            } catch {
+                firstError = firstError ?? error
+                failedSources.insert(url)
             }
-            matchFiles[sourceIndex].matches = newSource
-        } catch {
-            // Roll back the source file write so the match isn't lost.
-            try? suppressingWatcherEvents(for: sourceURL) {
-                try YAMLSerializer.write(fileContent(matchFiles[sourceIndex].matches, for: sourceURL), to: sourceURL)
-            }
-            throw error
         }
+
+        if !failedSources.isEmpty, let destIndex = matchFiles.firstIndex(where: { $0.url == targetURL }) {
+            let corrected = matchFiles[destIndex].matches.filter { m in
+                sourceOfMoved[m.id].map { !failedSources.contains($0) } ?? true
+            }
+            if (try? write(corrected, to: targetURL)) != nil {
+                matchFiles[destIndex].matches = corrected
+            }
+        }
+        matchFiles.sort { $0.url.path < $1.url.path }
+        if let firstError { throw firstError }
     }
 
     /// Delete a match by ID.
@@ -401,13 +500,29 @@ final class EspansoConfigStore: ObservableObject {
                 // Write first; only update in-memory if the write succeeds.
                 var updatedMatches = matchFiles[i].matches
                 updatedMatches.remove(at: j)
-                try suppressingWatcherEvents(for: url) {
-                    try YAMLSerializer.write(fileContent(updatedMatches, for: url), to: url)
-                }
+                try write(updatedMatches, to: url)
                 matchFiles[i].matches = updatedMatches
                 return
             }
         }
+    }
+
+    /// Delete several matches, writing each affected file once. Files are
+    /// independent: one that fails to write keeps its matches, the rest still
+    /// go through, and the first error is rethrown after all were attempted.
+    func delete(matchIDs: Set<UUID>) throws {
+        var firstError: Error?
+        for i in matchFiles.indices {
+            let remaining = matchFiles[i].matches.filter { !matchIDs.contains($0.id) }
+            guard remaining.count != matchFiles[i].matches.count else { continue }
+            do {
+                try write(remaining, to: matchFiles[i].url)
+                matchFiles[i].matches = remaining
+            } catch {
+                firstError = firstError ?? error
+            }
+        }
+        if let firstError { throw firstError }
     }
 
     /// Returns the MatchFile that owns a given match ID.
@@ -420,18 +535,22 @@ final class EspansoConfigStore: ObservableObject {
     private func handleExternalChange(at url: URL) {
         guard writingPaths[url.path] == nil else { return }
         var isDirectory: ObjCBool = false
-        FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
-        if url == matchDirectory || isDirectory.boolValue {
+        let exists = FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
+        if url == matchDirectory || isDirectory.boolValue || !exists {
+            // A deleted file isn't "changed" — there is nothing to reload. Sync
+            // the file list instead, which also drops its watch.
             handleDirectoryChange()
-        } else {
-            externallyChangedURL = url
+        } else if !externallyChangedURLs.contains(url) {
+            externallyChangedURLs.append(url)
         }
     }
 
     /// Called when the match directory (or a subdirectory) changes — a file or
     /// folder added or removed externally. Silently syncs matchFiles with disk.
     private func handleDirectoryChange() {
-        // Newly created subdirectories need their own watch.
+        // The root may not have existed at launch; newly created
+        // subdirectories need their own watch. (Both are no-ops if watched.)
+        watcher.watch(url: matchDirectory)
         scanSubdirectories().forEach { watcher.watch(url: $0) }
 
         let urls = Set(scanMatchDirectory())
@@ -451,6 +570,8 @@ final class EspansoConfigStore: ObservableObject {
             watcher.stopWatching(url: file.url)
         }
         matchFiles.removeAll { !urls.contains($0.url) }
+        externallyChangedURLs.removeAll { !urls.contains($0) }
+        knownModDates = knownModDates.filter { urls.contains($0.key) }
 
         // Re-sort to keep consistent ordering
         matchFiles.sort { $0.url.path < $1.url.path }
@@ -458,13 +579,17 @@ final class EspansoConfigStore: ObservableObject {
 
     /// Called when the user chooses "Reload" in the external edit banner.
     func reloadFile(at url: URL) {
+        externallyChangedURLs.removeAll { $0 == url }
         guard let index = matchFiles.firstIndex(where: { $0.url == url }) else { return }
         let previous = matchFiles[index].matches
         matchFiles[index] = loadFile(at: url, reusingIDsFrom: previous)
-        externallyChangedURL = nil
     }
 
+    /// Called when the user chooses "Keep Mine": the in-memory version wins, so
+    /// accept the file's current state on disk as known and allow writes again.
     func dismissExternalChangeNotice() {
-        externallyChangedURL = nil
+        guard let url = externallyChangedURLs.first else { return }
+        externallyChangedURLs.removeFirst()
+        knownModDates[url] = Self.modDate(of: url)
     }
 }

@@ -120,7 +120,7 @@ struct DiagnosticsView: View {
             } else {
                 for url in allFiles {
                     let rel = url.path.replacingOccurrences(of: matchDir.path + "/", with: "")
-                    let isYML = url.pathExtension == "yml"
+                    let isYML = EspansoConfigStore.matchExtensions.contains(url.pathExtension)
                     let readable = fm.isReadableFile(atPath: url.path)
                     dirListLines.append("\(isYML ? "●" : "○") \(rel)\(readable ? "" : "  [not readable]")")
                 }
@@ -128,7 +128,7 @@ struct DiagnosticsView: View {
         } else {
             dirListLines.append("(could not enumerate directory)")
         }
-        lines += section("Directory Contents  (● = .yml, ○ = other)", dirListLines)
+        lines += section("Directory Contents  (● = .yml/.yaml, ○ = other)", dirListLines)
 
         // Cross-file trigger conflicts
         let conflicts = await MainActor.run { store.triggerConflicts() }

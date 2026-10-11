@@ -30,7 +30,7 @@ public enum MatchExpander {
             let fmt = stringParam(v, "format") ?? "%Y-%m-%d"
             return formatDate(strftimePattern: fmt)
         case .clipboard:
-            return NSPasteboard.general.string(forType: .string) ?? "[clipboard]"
+            return clipboardText() ?? "[clipboard]"
         case .echo:
             return stringParam(v, "echo") ?? ""
         case .random:
@@ -46,7 +46,27 @@ public enum MatchExpander {
             return "[form]"
         case .match:
             return "[match]"
+        default:
+            return "[\(v.type.rawValue)]"
         }
+    }
+
+    /// The preview re-renders on every keystroke. Reading the pasteboard's
+    /// contents each time is an IPC round trip and, on recent macOS, counts as
+    /// a programmatic paste; its change count is free, so re-read only when
+    /// that moves.
+    private static let cacheLock = NSLock()
+    private static var clipboardCache: (changeCount: Int, text: String?)?
+    private static var dateFormatters: [String: DateFormatter] = [:]
+
+    private static func clipboardText() -> String? {
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+        let count = NSPasteboard.general.changeCount
+        if let cached = clipboardCache, cached.changeCount == count { return cached.text }
+        let text = NSPasteboard.general.string(forType: .string)
+        clipboardCache = (count, text)
+        return text
     }
 
     private static func stringParam(_ v: EspansoVar, _ key: String) -> String? {
@@ -101,8 +121,16 @@ public enum MatchExpander {
         }
         flushLiteral()
 
-        let f = DateFormatter()
-        f.dateFormat = pattern
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+        let f = dateFormatters[pattern] ?? {
+            // Every keystroke in a format field is a new pattern; don't keep them all.
+            if dateFormatters.count >= 32 { dateFormatters.removeAll() }
+            let f = DateFormatter()
+            f.dateFormat = pattern
+            dateFormatters[pattern] = f
+            return f
+        }()
         return f.string(from: Date())
     }
 

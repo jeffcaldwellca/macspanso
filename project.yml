@@ -9,7 +9,7 @@ options:
 packages:
   Yams:
     url: https://github.com/jpsim/Yams
-    from: 5.0.6
+    from: 5.4.0
 settings:
   base:
     SWIFT_VERSION: "5.9"
@@ -27,8 +27,8 @@ targets:
         LSUIElement: true
         CFBundleName: macspanso
         CFBundleDisplayName: macspanso
-        CFBundleShortVersionString: "1.4.1"
-        CFBundleVersion: "7"
+        CFBundleShortVersionString: "1.5.0"
+        CFBundleVersion: "8"
         NSHumanReadableCopyright: "Copyright © 2026 Macspanso"
     dependencies:
       - package: Yams

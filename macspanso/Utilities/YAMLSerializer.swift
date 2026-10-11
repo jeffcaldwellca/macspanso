@@ -20,6 +20,7 @@ public enum YAMLSerializer {
             let content = try YAMLDecoder().decode(MatchFileContent.self, from: yaml)
             return content.matches ?? []
         } catch DecodingError.typeMismatch(_, let ctx) where ctx.codingPath.isEmpty {
+            try requireNoContent(yaml)
             return []
         }
     }
@@ -39,6 +40,7 @@ public enum YAMLSerializer {
         do {
             return try YAMLDecoder().decode(MatchFileContent.self, from: yaml)
         } catch DecodingError.typeMismatch(_, let ctx) where ctx.codingPath.isEmpty {
+            try requireNoContent(yaml)
             return MatchFileContent(matches: [])
         }
     }
@@ -47,6 +49,22 @@ public enum YAMLSerializer {
     public static func decodeContent(contentsOf url: URL) throws -> MatchFileContent {
         let text = try String(contentsOf: url, encoding: .utf8)
         return try decodeContent(yaml: text)
+    }
+
+    /// A top-level type mismatch is harmless only when the file holds no YAML
+    /// content at all (comments, `---`, `~`). A file whose top level is a list
+    /// or a bare value has content this app can't represent; treating it as
+    /// empty would make it look safe to overwrite.
+    private static func requireNoContent(_ yaml: String) throws {
+        guard let root = try Yams.compose(yaml: yaml) else { return }
+        if case .scalar(let scalar) = root, ["", "~", "null", "Null", "NULL"].contains(scalar.string),
+           scalar.style == .plain || scalar.style == .any {
+            return
+        }
+        throw DecodingError.dataCorrupted(.init(
+            codingPath: [],
+            debugDescription: "The top level of a match file must be a mapping with a `matches:` key."
+        ))
     }
 
     // MARK: - Encode
@@ -59,7 +77,42 @@ public enum YAMLSerializer {
 
     /// Encode full file content (matches + preserved top-level keys).
     public static func encode(_ content: MatchFileContent) throws -> String {
-        try YAMLEncoder().encode(content)
+        let encoder = YAMLEncoder()
+        // Keep the file readable for people who also edit it by hand: emoji and
+        // accents stay literal instead of \U… escapes, multi-line replacements
+        // stay `|` blocks instead of one escaped line, and long lines aren't re-wrapped.
+        encoder.options.allowUnicode = true
+        encoder.options.newLineScalarStyle = .literal
+        encoder.options.width = -1
+        let yaml = try encoder.encode(content)
+
+        // libyaml still escapes characters outside the Basic Multilingual Plane
+        // (most emoji) as \UXXXXXXXX even with allowUnicode. Put them back, but
+        // only keep the result if it provably parses to the same content.
+        let readable = unescapingAstralCharacters(in: yaml)
+        guard readable != yaml,
+              let reparsed = try? YAMLDecoder().decode(MatchFileContent.self, from: readable),
+              (try? encoder.encode(reparsed)) == yaml
+        else { return yaml }
+        return readable
+    }
+
+    /// Replace `\UXXXXXXXX` escapes with the character itself. An escaped
+    /// backslash (`\\U…`) is literal text, so only an odd run of backslashes counts.
+    private static func unescapingAstralCharacters(in yaml: String) -> String {
+        guard yaml.contains("\\U"),
+              let regex = try? NSRegularExpression(pattern: #"(?<!\\)((?:\\\\)*)\\U([0-9A-Fa-f]{8})"#)
+        else { return yaml }
+        var result = yaml
+        let ns = yaml as NSString
+        for m in regex.matches(in: yaml, range: NSRange(location: 0, length: ns.length)).reversed() {
+            guard let value = UInt32(ns.substring(with: m.range(at: 2)), radix: 16),
+                  let scalar = Unicode.Scalar(value), value > 0xFFFF,
+                  let range = Range(m.range, in: result)
+            else { continue }
+            result.replaceSubrange(range, with: ns.substring(with: m.range(at: 1)) + String(Character(scalar)))
+        }
+        return result
     }
 
     // MARK: - Atomic Write

@@ -8,6 +8,7 @@ public enum ValidationError: Equatable {
     case duplicateVarName(String)         // var name
     case emptyShellCmd
     case emptyFormTemplate
+    case emptyReplacement
 }
 
 public enum MatchValidator {
@@ -60,11 +61,23 @@ public enum MatchValidator {
             errors.append(.emptyFormTemplate)
         }
 
+        // A match needs something to expand to. Replacement kinds this app
+        // doesn't model (image_path, markdown, html) live in `extras`.
+        let hasUnmodelledReplacement = !Set(match.extras.keys)
+            .isDisjoint(with: ["image_path", "markdown", "html"])
+        // `replace: ""` is deliberate (expand to nothing), so only absence counts.
+        if match.form == nil, match.replace == nil, !hasUnmodelledReplacement {
+            errors.append(.emptyReplacement)
+        }
+
         // {{varName}} references in replace must resolve to declared vars —
         // either the match's own or names declared under global_vars anywhere.
         if let replace = match.replace {
             let refs = varReferences(in: replace)
-            let declared = Set((match.vars ?? []).map(\.name)).union(globalVarNames)
+            // A regex trigger's named capture groups are usable as {{name}} too.
+            let declared = Set((match.vars ?? []).map(\.name))
+                .union(globalVarNames)
+                .union(match.regex.map(namedGroups(in:)) ?? [])
             for ref in refs where !declared.contains(ref) {
                 errors.append(.unresolvedVarReference(ref))
             }
@@ -86,6 +99,23 @@ public enum MatchValidator {
         }
 
         return errors
+    }
+
+    /// Names of the capture groups in an espanso regex trigger. espanso uses
+    /// Rust's regex syntax, which accepts both `(?P<name>…)` and `(?<name>…)`.
+    public static func namedGroups(in pattern: String) -> [String] {
+        guard let regex = try? NSRegularExpression(pattern: #"\(\?P?<([A-Za-z_][A-Za-z0-9_]*)>"#)
+        else { return [] }
+        let range = NSRange(pattern.startIndex..., in: pattern)
+        return regex.matches(in: pattern, range: range).compactMap {
+            Range($0.range(at: 1), in: pattern).map { String(pattern[$0]) }
+        }
+    }
+
+    /// The same pattern in the syntax `NSRegularExpression` (ICU) accepts, for
+    /// testing a trigger in-app: ICU rejects Rust's `(?P<name>…)` group form.
+    public static func icuPattern(fromEspansoRegex pattern: String) -> String {
+        pattern.replacingOccurrences(of: "(?P<", with: "(?<")
     }
 
     /// Extract {{varName}} references from a replacement string.

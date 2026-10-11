@@ -18,12 +18,14 @@
 		3707A90CFF568DAEDE178BF0 /* YAMLParsingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB31B0A80C7E4AB1B688D07 /* YAMLParsingTests.swift */; };
 		3855893A74AAF9935C0EC172 /* LogViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB5A70E53C2C5BAE42F7ABBD /* LogViewer.swift */; };
 		47B4E2B111B9796B49C8AA34 /* FormFieldsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C878548B9B683C2270B1273 /* FormFieldsSection.swift */; };
+		49516FD5D2A8C3394A670FD3 /* YAMLPatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EF41F91EC9418574E458604 /* YAMLPatcher.swift */; };
 		4A4B9964BA81D2E52E0272CD /* MatchListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0F930F9C211A0971B16A7A /* MatchListView.swift */; };
 		60D9D5294EF11BD883A67895 /* EspansoVar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BA30315FCC8E232EF0619A7 /* EspansoVar.swift */; };
 		61EDF930BF4D96D560F18CF8 /* BackupManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 617A9D23BF90860C85909EC2 /* BackupManagerTests.swift */; };
 		6434EB61ADEEE00F6CFC0DF7 /* DiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02EA671901CA4DAFC1F75E0C /* DiagnosticsView.swift */; };
 		674DE122D0A6EEB69B24E606 /* YAMLSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5052F737DE80E9307D1A5CD /* YAMLSerializer.swift */; };
 		6A5A359E1C1F69C6BBFA28BB /* FileWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FB8530FDA5F7A4FF993B443 /* FileWatcher.swift */; };
+		70A889E500B59E3A9E1BDE39 /* GlobalHotKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD10A9FB3FA0526B595888B3 /* GlobalHotKeys.swift */; };
 		768E48825C5596A69267F879 /* FileTreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0882C2FC91DCC46DD6BC48EE /* FileTreeView.swift */; };
 		7DBA6F75EEA2397E14800BA1 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D9311AD3CA4F25DF3E49BF7 /* MenuBarController.swift */; };
 		8088A487EDAFF5DEF6CD69E5 /* logo-sm.png in Resources */ = {isa = PBXBuildFile; fileRef = 48296F73242EFFBEAF516FEC /* logo-sm.png */; };
@@ -51,6 +53,7 @@
 		D84E5E8EF28FA135D2879D2F /* MatchExpander.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BD15449088C2D9C3490DF19 /* MatchExpander.swift */; };
 		DEEE48DB738AA4967926024C /* TriggerConflictTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FFDCF28DBEF79CDB9D20962 /* TriggerConflictTests.swift */; };
 		E0FCF244AEE299A5C97C6804 /* MatchManagerWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6750794A19508E640DB18607 /* MatchManagerWindow.swift */; };
+		E55AF17D6BA6D979B6FA73A6 /* YAMLPatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF9F5024EFAF3551AED3DE1F /* YAMLPatcherTests.swift */; };
 		E6992F88EDDAE0B39C74A914 /* MatchValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F15E7CE6C04870BF8BD59FD /* MatchValidator.swift */; };
 		EB11099E32AB2AF21663ADF3 /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70FA31CC02022AE2267674F3 /* UpdateChecker.swift */; };
 		F111131E613F5C6CC4F8BBBC /* MatchFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BFC9A2FF067F185C8063123 /* MatchFile.swift */; };
@@ -94,6 +97,7 @@
 		70FA31CC02022AE2267674F3 /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateChecker.swift; sourceTree = "<group>"; };
 		7D101A2C6D185C3EC5C0BC8D /* macspanso.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = macspanso.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7D7EBB169B203D1E23937442 /* ViewStubs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewStubs.swift; sourceTree = "<group>"; };
+		7EF41F91EC9418574E458604 /* YAMLPatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YAMLPatcher.swift; sourceTree = "<group>"; };
 		8509E46B021A8471FDA9983C /* YAMLAny.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YAMLAny.swift; sourceTree = "<group>"; };
 		89DC13EF64A6AE194B8E4329 /* FormField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormField.swift; sourceTree = "<group>"; };
 		9139A78FA597BE9FF574C077 /* VariableBuilderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VariableBuilderView.swift; sourceTree = "<group>"; };
@@ -115,6 +119,8 @@
 		F5970F4B2C15BC128D9A8456 /* EspansoConfigStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EspansoConfigStoreTests.swift; sourceTree = "<group>"; };
 		F73300D0AA66B88477808373 /* macspansoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = macspansoApp.swift; sourceTree = "<group>"; };
 		FCB60FA98EE57D48527FB2EA /* MatchExpanderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchExpanderTests.swift; sourceTree = "<group>"; };
+		FD10A9FB3FA0526B595888B3 /* GlobalHotKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKeys.swift; sourceTree = "<group>"; };
+		FF9F5024EFAF3551AED3DE1F /* YAMLPatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YAMLPatcherTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -178,6 +184,7 @@
 				4FFDCF28DBEF79CDB9D20962 /* TriggerConflictTests.swift */,
 				2CB0240EC4BC5EA2A9BDDBDB /* TriggerModeTransitionTests.swift */,
 				BBB31B0A80C7E4AB1B688D07 /* YAMLParsingTests.swift */,
+				FF9F5024EFAF3551AED3DE1F /* YAMLPatcherTests.swift */,
 				55A823094350043793627A9A /* YAMLSerializationTests.swift */,
 			);
 			path = macspansoTests;
@@ -189,6 +196,7 @@
 				3BD15449088C2D9C3490DF19 /* MatchExpander.swift */,
 				9F15E7CE6C04870BF8BD59FD /* MatchValidator.swift */,
 				142ED47EF8B3DEC59AE059EC /* TriggerModeTransition.swift */,
+				7EF41F91EC9418574E458604 /* YAMLPatcher.swift */,
 				B5052F737DE80E9307D1A5CD /* YAMLSerializer.swift */,
 			);
 			path = Utilities;
@@ -197,6 +205,7 @@
 		52AF2A16F3FB15621CC5C266 /* MenuBar */ = {
 			isa = PBXGroup;
 			children = (
+				FD10A9FB3FA0526B595888B3 /* GlobalHotKeys.swift */,
 				2D9311AD3CA4F25DF3E49BF7 /* MenuBarController.swift */,
 			);
 			path = MenuBar;
@@ -377,6 +386,7 @@
 				6A5A359E1C1F69C6BBFA28BB /* FileWatcher.swift in Sources */,
 				945285C3E38182EB610CD985 /* FormField.swift in Sources */,
 				47B4E2B111B9796B49C8AA34 /* FormFieldsSection.swift in Sources */,
+				70A889E500B59E3A9E1BDE39 /* GlobalHotKeys.swift in Sources */,
 				3855893A74AAF9935C0EC172 /* LogViewer.swift in Sources */,
 				BFD632A8CEC8466D2AABA911 /* MacspansoIntents.swift in Sources */,
 				9BCBA5C7D6166D802CA1F54D /* MatchEditorForm.swift in Sources */,
@@ -393,6 +403,7 @@
 				83CE32541305E31383616EE5 /* VariableBuilderView.swift in Sources */,
 				C72420319FBF0791E1119040 /* ViewStubs.swift in Sources */,
 				973591997CC091DE83924164 /* YAMLAny.swift in Sources */,
+				49516FD5D2A8C3394A670FD3 /* YAMLPatcher.swift in Sources */,
 				674DE122D0A6EEB69B24E606 /* YAMLSerializer.swift in Sources */,
 				940CB95865F935DBDBDDDB21 /* macspansoApp.swift in Sources */,
 			);
@@ -413,6 +424,7 @@
 				DEEE48DB738AA4967926024C /* TriggerConflictTests.swift in Sources */,
 				8254DD54CA576CFB4230E019 /* TriggerModeTransitionTests.swift in Sources */,
 				3707A90CFF568DAEDE178BF0 /* YAMLParsingTests.swift in Sources */,
+				E55AF17D6BA6D979B6FA73A6 /* YAMLPatcherTests.swift in Sources */,
 				9994F33BE0354A89D826B906 /* YAMLSerializationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -661,7 +673,7 @@
 			repositoryURL = "https://github.com/jpsim/Yams";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 5.0.6;
+				minimumVersion = 5.4.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

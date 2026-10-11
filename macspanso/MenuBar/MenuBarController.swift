@@ -14,6 +14,8 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     private let backupManager: BackupManager
     private let updateChecker: UpdateChecker
     private var didCreateSessionSnapshot = false
+    private let hotKeys = GlobalHotKeys()
+    private static let hotKeysDefaultsKey = "macspanso.globalHotKeysEnabled"
 
     private static let espansoURL = URL(string: "https://espanso.org")!
     private static let releasesURL = URL(string: "https://github.com/jeffcaldwellca/macspanso/releases/latest")!
@@ -45,6 +47,19 @@ final class MenuBarController: NSObject, NSMenuDelegate {
             .sink { [weak self] _ in self?.buildMenu() }
             .store(in: &cancellables)
 
+        // Opt-in: a menu bar utility shouldn't claim system-wide shortcuts unasked.
+        hotKeys.onAction = { [weak self] action in
+            // Same rule as the menu, which hides these when espanso is missing.
+            guard let self, self.processManager.state != .notInstalled else { return }
+            switch action {
+            case .openMatchManager: self.showMatchManager(focus: .none)
+            case .newMatch:         self.showMatchManager(focus: .newMatch)
+            }
+        }
+        if UserDefaults.standard.bool(forKey: Self.hotKeysDefaultsKey) {
+            hotKeys.enable()
+        }
+
         updateChecker.onStateChange = { [weak self] in
             self?.configureIcon()
             self?.buildMenu()
@@ -56,6 +71,9 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     /// refresh a stale update check (timers don't fire across system sleep).
     func menuNeedsUpdate(_ menu: NSMenu) {
         updateChecker.checkIfStale()
+        // Background polling is deliberately slow; make the state current
+        // whenever the user is actually looking at it.
+        Task { await processManager.refresh() }
         buildMenu()
     }
 
@@ -157,6 +175,14 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         launchAtLoginItem.state = (SMAppService.mainApp.status == .enabled) ? .on : .off
         menu.addItem(launchAtLoginItem)
 
+        let open = GlobalHotKeys.Action.openMatchManager.displayString
+        let new = GlobalHotKeys.Action.newMatch.displayString
+        let hotKeysItem = NSMenuItem(title: "Global Shortcuts (\(open) Open, \(new) New Match)",
+                                     action: #selector(toggleGlobalHotKeys), keyEquivalent: "")
+        hotKeysItem.target = self
+        hotKeysItem.state = hotKeys.isEnabled ? .on : .off
+        menu.addItem(hotKeysItem)
+
         menu.addItem(.separator())
         let aboutItem = NSMenuItem(title: "About macspanso",
                                    action: #selector(openAbout), keyEquivalent: "")
@@ -248,6 +274,11 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         case .about:    windowController?.focusAbout()
         case .none:     break
         }
+    }
+
+    /// Asked on Quit: false if the user chose to keep editing an unsaved match.
+    func confirmDiscardingUnsavedChanges() -> Bool {
+        windowController?.confirmDiscardingUnsavedChanges() ?? true
     }
 
     @objc private func windowDidClose(_ note: Notification) {
@@ -397,6 +428,19 @@ final class MenuBarController: NSObject, NSMenuDelegate {
                 alert.runModal()
             }
         }
+    }
+
+    @objc private func toggleGlobalHotKeys() {
+        if hotKeys.isEnabled {
+            hotKeys.disable()
+        } else if !hotKeys.enable() {
+            let alert = NSAlert()
+            alert.messageText = "Couldn't Turn On Global Shortcuts"
+            alert.informativeText = "Another app is already using one of these key combinations."
+            alert.runModal()
+        }
+        UserDefaults.standard.set(hotKeys.isEnabled, forKey: Self.hotKeysDefaultsKey)
+        buildMenu()
     }
 
     @objc private func toggleLaunchAtLogin() {

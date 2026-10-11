@@ -29,6 +29,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        // Quitting destroys the editor like closing its window does.
+        MainActor.assumeIsolated {
+            menuBarController?.confirmDiscardingUnsavedChanges() == false ? .terminateCancel : .terminateNow
+        }
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
         processManager?.stopPolling()
     }

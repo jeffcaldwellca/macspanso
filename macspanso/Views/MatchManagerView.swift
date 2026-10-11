@@ -3,9 +3,17 @@ import SwiftUI
 
 private enum AppTab { case matches, about }
 
+/// Editor state the window needs to see from outside SwiftUI — whether closing
+/// it right now would throw away unsaved edits.
+@MainActor
+final class EditorSession: ObservableObject {
+    @Published var hasUnsavedChanges = false
+}
+
 struct MatchManagerView: View {
     @ObservedObject var store: EspansoConfigStore
     @ObservedObject var processManager: EspansoProcessManager
+    @ObservedObject var session: EditorSession
 
     @State private var selectedTab: AppTab = .matches
     @State private var selectedMatchIDs: Set<UUID> = []
@@ -14,6 +22,66 @@ struct MatchManagerView: View {
     @State private var showFileTree: Bool = false
     @State private var searchText: String = ""
     @State private var showQuickSwitcher: Bool = false
+    /// A navigation the user asked for while the editor had unsaved edits,
+    /// held until they confirm discarding them.
+    @State private var pendingNavigation: Navigation?
+    /// Shown from here, not the bulk panel: a bulk action usually ends the
+    /// multi-selection, which removes the panel before it could show anything.
+    @State private var bulkActionError: String?
+
+    private struct Navigation {
+        var tab: AppTab = .matches
+        var selection: Set<UUID>
+        var creatingNew: Bool
+    }
+
+    /// Every route away from the current editor goes through here.
+    private func navigate(to selection: Set<UUID>, creatingNew: Bool = false) {
+        let target = Navigation(selection: selection, creatingNew: creatingNew)
+        // Extending a selection doesn't replace the editor until it becomes a
+        // different single match, but any change away from it loses the draft.
+        // If the match being edited was just deleted there is no draft left to protect.
+        let editedMatchStillExists = singleSelectedMatchID.map { id in
+            store.allMatches.contains { $0.id == id }
+        } ?? isCreatingNew
+        if session.hasUnsavedChanges, editedMatchStillExists,
+           selection != selectedMatchIDs || creatingNew != isCreatingNew {
+            pendingNavigation = target
+        } else {
+            apply(target)
+        }
+    }
+
+    private func apply(_ target: Navigation) {
+        selectedTab = target.tab
+        selectedMatchIDs = target.selection
+        isCreatingNew = target.creatingNew
+    }
+
+    /// Leaving the Matches tab tears the editor down, so it needs the same check.
+    private func showAbout() {
+        let target = Navigation(tab: .about, selection: selectedMatchIDs, creatingNew: isCreatingNew)
+        if session.hasUnsavedChanges {
+            pendingNavigation = target
+        } else {
+            apply(target)
+        }
+    }
+
+    /// Selection binding for the list: user clicks are routed through `navigate`.
+    private var guardedSelection: Binding<Set<UUID>> {
+        Binding(
+            get: { selectedMatchIDs },
+            set: { navigate(to: $0, creatingNew: $0.isEmpty && isCreatingNew) }
+        )
+    }
+
+    private var guardedCreatingNew: Binding<Bool> {
+        Binding(
+            get: { isCreatingNew },
+            set: { navigate(to: $0 ? [] : selectedMatchIDs, creatingNew: $0) }
+        )
+    }
 
     /// When the user has exactly one match selected, the editor shows it. Multi-selection
     /// shows a bulk-action panel instead — see `editorPanel`.
@@ -29,11 +97,33 @@ struct MatchManagerView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .focusNewMatch)) { _ in
             selectedTab = .matches
-            selectedMatchIDs = []
-            isCreatingNew = true
+            navigate(to: [], creatingNew: true)
+        }
+        .confirmationDialog(
+            "Discard unsaved changes?",
+            isPresented: Binding(
+                get: { pendingNavigation != nil },
+                set: { if !$0 { pendingNavigation = nil } }
+            )
+        ) {
+            Button("Discard Changes", role: .destructive) {
+                if let target = pendingNavigation { apply(target) }
+                pendingNavigation = nil
+            }
+            Button("Keep Editing", role: .cancel) { pendingNavigation = nil }
+        } message: {
+            Text("The match you're editing has changes that haven't been saved.")
+        }
+        .alert("Some Matches Couldn't Be Changed", isPresented: Binding(
+            get: { bulkActionError != nil },
+            set: { if !$0 { bulkActionError = nil } }
+        )) {
+            Button("OK") { bulkActionError = nil }
+        } message: {
+            Text(bulkActionError ?? "")
         }
         .onReceive(NotificationCenter.default.publisher(for: .focusAbout)) { _ in
-            selectedTab = .about
+            showAbout()
         }
         .background(
             Button("Quick Switcher") { showQuickSwitcher = true }
@@ -44,8 +134,11 @@ struct MatchManagerView: View {
         .sheet(isPresented: $showQuickSwitcher) {
             QuickSwitcherView(store: store, isPresented: $showQuickSwitcher) { id in
                 selectedTab = .matches
-                isCreatingNew = false
-                selectedMatchIDs = [id]
+                // Wait for this sheet to finish dismissing: a confirmation dialog
+                // requested while a sheet is still going away may never appear.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    navigate(to: [id])
+                }
             }
         }
     }
@@ -58,7 +151,7 @@ struct MatchManagerView: View {
                 selectedTab = .matches
             }
             TabBarButton(label: "About", systemImage: "info.circle", selected: selectedTab == .about) {
-                selectedTab = .about
+                showAbout()
             }
             Spacer()
         }
@@ -90,8 +183,8 @@ struct MatchManagerView: View {
             HSplitView {
                 MatchListView(
                     store: store,
-                    selectedMatchIDs: $selectedMatchIDs,
-                    isCreatingNew: $isCreatingNew,
+                    selectedMatchIDs: guardedSelection,
+                    isCreatingNew: guardedCreatingNew,
                     showFileTree: $showFileTree,
                     searchText: $searchText
                 )
@@ -105,7 +198,14 @@ struct MatchManagerView: View {
             if let changedURL = store.externallyChangedURL {
                 ExternalEditBanner(
                     filename: changedURL.lastPathComponent,
-                    onReload: { store.reloadFile(at: changedURL) },
+                    onReload: {
+                        // An untouched editor would otherwise keep showing the
+                        // pre-reload text, look edited, and save it back over
+                        // the change just loaded. A real draft is left alone.
+                        let editorWasClean = !session.hasUnsavedChanges
+                        store.reloadFile(at: changedURL)
+                        if editorWasClean { editorGeneration += 1 }
+                    },
                     onKeep: { store.dismissExternalChangeNotice() }
                 )
                 .transition(.move(edge: .top).combined(with: .opacity))
@@ -121,7 +221,8 @@ struct MatchManagerView: View {
         if selectedMatchIDs.count > 1 {
             BulkActionPanel(
                 store: store,
-                selectedIDs: $selectedMatchIDs
+                selectedIDs: $selectedMatchIDs,
+                onError: { bulkActionError = $0 }
             )
         } else if let id = singleSelectedMatchID,
            let match = store.allMatches.first(where: { $0.id == id }),
@@ -131,7 +232,9 @@ struct MatchManagerView: View {
                 sourceFile: file,
                 store: store,
                 onSave: { selectedMatchIDs = [$0.id]; editorGeneration += 1 },
-                onCancel: {}
+                // Re-init the form from the stored match, discarding the draft.
+                onCancel: { editorGeneration += 1 },
+                onDirtyChange: { session.hasUnsavedChanges = $0 }
             )
             // Increment editorGeneration on save so SwiftUI re-inits the form,
             // resetting initialMatch and clearing the dirty flag.
@@ -142,9 +245,14 @@ struct MatchManagerView: View {
                 sourceFile: nil,
                 store: store,
                 onSave: { selectedMatchIDs = [$0.id]; isCreatingNew = false },
-                onCancel: { isCreatingNew = false }
+                onCancel: { isCreatingNew = false },
+                onDirtyChange: { session.hasUnsavedChanges = $0 }
             )
             .id("new")  // force re-init when triggered from menu bar
+        } else if store.allMatches.isEmpty, !store.unreadableFiles.isEmpty {
+            // Not an empty config — the matches exist but couldn't be parsed.
+            // Offering starters here would invite writing over those files.
+            UnreadableFilesView(files: store.unreadableFiles)
         } else if store.allMatches.isEmpty {
             EmptyStateView(store: store) { newMatchID in
                 selectedMatchIDs = [newMatchID]
@@ -164,7 +272,7 @@ struct MatchManagerView: View {
 private struct BulkActionPanel: View {
     @ObservedObject var store: EspansoConfigStore
     @Binding var selectedIDs: Set<UUID>
-    @State private var actionError: String?
+    let onError: (String) -> Void
     @State private var confirmDelete = false
 
     private var selectedMatches: [EspansoMatch] {
@@ -218,10 +326,6 @@ private struct BulkActionPanel: View {
                 .buttonStyle(.bordered)
             }
 
-            if let err = actionError {
-                Text(err).font(.caption).foregroundStyle(.red)
-            }
-
             Divider().padding(.horizontal, 60)
 
             ScrollView {
@@ -246,24 +350,57 @@ private struct BulkActionPanel: View {
     }
 
     private func deleteAll() {
-        let ids = selectedIDs
-        var firstError: String?
-        for id in ids {
-            do { try store.delete(matchID: id) }
-            catch { firstError = firstError ?? error.localizedDescription }
-        }
+        do { try store.delete(matchIDs: selectedIDs) }
+        catch { onError(error.localizedDescription) }
         selectedIDs = []
-        actionError = firstError
     }
 
     private func moveAll(to url: URL) {
-        let ids = selectedIDs
-        var firstError: String?
-        for id in ids {
-            do { try store.move(matchID: id, to: url) }
-            catch { firstError = firstError ?? error.localizedDescription }
+        do { try store.move(matchIDs: selectedIDs, to: url) }
+        catch { onError(error.localizedDescription) }
+    }
+}
+
+private struct UnreadableFilesView: View {
+    let files: [MatchFile]
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 40, weight: .light))
+                .foregroundStyle(.orange)
+            Text(files.count == 1 ? "Couldn't read \(files[0].displayName)"
+                                  : "Couldn't read \(files.count) match files")
+                .font(.title2)
+                .fontWeight(.semibold)
+            Text("Your matches are still on disk and espanso may still be using them, but macspanso can't parse the file\(files.count == 1 ? "" : "s") below, so nothing is shown and nothing will be written to \(files.count == 1 ? "it" : "them").")
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 460)
+
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(files) { file in
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack {
+                            Text(file.displayName)
+                                .font(.system(.callout, design: .monospaced))
+                                .fontWeight(.medium)
+                            Spacer()
+                            Button("Open in Editor") { NSWorkspace.shared.open(file.url) }
+                                .controlSize(.small)
+                        }
+                        Text(file.parseError ?? "")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                    }
+                }
+            }
+            .frame(maxWidth: 460)
         }
-        actionError = firstError
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(40)
     }
 }
 

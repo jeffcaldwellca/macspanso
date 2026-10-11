@@ -18,11 +18,7 @@ struct QuickSwitcherView: View {
     private var filtered: [EspansoMatch] {
         let q = query.trimmingCharacters(in: .whitespaces)
         guard !q.isEmpty else { return Array(store.allMatches.prefix(50)) }
-        return store.allMatches.filter { m in
-            m.primaryTrigger.localizedCaseInsensitiveContains(q) ||
-            (m.label ?? "").localizedCaseInsensitiveContains(q) ||
-            m.replacementPreview.localizedCaseInsensitiveContains(q)
-        }
+        return store.allMatches.filter { $0.matches(searchText: q) }
     }
 
     var body: some View {

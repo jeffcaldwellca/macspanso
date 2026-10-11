@@ -2,9 +2,15 @@
 import Foundation
 
 public struct FormField: Codable, Equatable {
-    /// `choice` for dropdown fields (espanso `type: choice`); `nil` for plain text.
-    public enum FieldKind: String, Codable, Equatable {
-        case choice
+    /// `choice` (dropdown) or `list` (list box) for fields that pick from
+    /// `values`; `nil` for plain text. Open-ended so an unrecognised kind
+    /// doesn't make the whole file fail to parse.
+    public struct FieldKind: RawRepresentable, Codable, Equatable {
+        public let rawValue: String
+        public init(rawValue: String) { self.rawValue = rawValue }
+
+        public static let choice = FieldKind(rawValue: "choice")
+        public static let list   = FieldKind(rawValue: "list")
     }
 
     public var type: FieldKind?
@@ -12,10 +18,14 @@ public struct FormField: Codable, Equatable {
     public var `default`: String?
     /// Whether the text input accepts multiple lines.
     public var multiline: Bool?
-    /// Options shown in the dropdown. Only meaningful when `type == .choice`.
+    /// Options to pick from. Only meaningful when `isDropdown`.
     public var values: [String]?
 
-    public var isDropdown: Bool { type == .choice }
+    /// YAML keys on this field that macspanso doesn't model
+    /// (trim_string_values, …), preserved verbatim so editing never destroys them.
+    public var extras: [String: YAMLAny] = [:]
+
+    public var isDropdown: Bool { type == .choice || type == .list }
 
     public init(
         type: FieldKind? = nil,
@@ -39,8 +49,26 @@ public struct FormField: Codable, Equatable {
 
     // MARK: - Codable
 
-    private enum CodingKeys: String, CodingKey {
+    private enum CodingKeys: String, CodingKey, CaseIterable {
         case type, `default`, multiline, values
+    }
+
+    private static let knownKeys: Set<String> =
+        Set(CodingKeys.allCases.map(\.rawValue))
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.type      = try c.decodeIfPresent(FieldKind.self, forKey: .type)
+        self.default   = try c.decodeIfPresent(String.self,    forKey: .default)
+        self.multiline = try c.decodeIfPresent(Bool.self,      forKey: .multiline)
+        self.values    = try c.decodeIfPresent([String].self,  forKey: .values)
+
+        let dynamic = try decoder.container(keyedBy: AnyCodingKey.self)
+        var extras: [String: YAMLAny] = [:]
+        for key in dynamic.allKeys where !Self.knownKeys.contains(key.stringValue) {
+            extras[key.stringValue] = try dynamic.decode(YAMLAny.self, forKey: key)
+        }
+        self.extras = extras
     }
 
     /// Custom encode using encodeIfPresent so nil fields are omitted entirely from YAML,
@@ -51,5 +79,10 @@ public struct FormField: Codable, Equatable {
         try c.encodeIfPresent(`default`, forKey: .default)
         try c.encodeIfPresent(multiline, forKey: .multiline)
         try c.encodeIfPresent(values,    forKey: .values)
+
+        var dynamic = encoder.container(keyedBy: AnyCodingKey.self)
+        for key in extras.keys.sorted() {
+            try dynamic.encode(extras[key]!, forKey: AnyCodingKey(stringValue: key))
+        }
     }
 }

@@ -59,11 +59,7 @@ struct MatchListView: View {
     private var filteredMatches: [EspansoMatch] {
         var results = store.allMatches.filter(filter.matches)
         if !searchText.isEmpty {
-            results = results.filter {
-                $0.primaryTrigger.localizedCaseInsensitiveContains(searchText) ||
-                $0.replacementPreview.localizedCaseInsensitiveContains(searchText) ||
-                ($0.label ?? "").localizedCaseInsensitiveContains(searchText)
-            }
+            results = results.filter { $0.matches(searchText: searchText) }
         }
         switch sort {
         case .fileOrder:
@@ -76,7 +72,9 @@ struct MatchListView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        // Filter + sort once per render; the list and the count share it.
+        let filtered = filteredMatches
+        return VStack(spacing: 0) {
             searchBar
             if !showFileTree {
                 filterBar
@@ -86,11 +84,11 @@ struct MatchListView: View {
             if showFileTree {
                 FileTreeView(store: store, selectedMatchIDs: $selectedMatchIDs)
             } else {
-                flatList
+                flatList(filtered)
             }
 
             Divider()
-            toolbar
+            toolbar(shown: filtered.count)
         }
         .background(Color(nsColor: .controlBackgroundColor))
     }
@@ -132,7 +130,7 @@ struct MatchListView: View {
         }
     }
 
-    private var toolbar: some View {
+    private func toolbar(shown: Int) -> some View {
         HStack(spacing: 4) {
             Button {
                 selectedMatchIDs = []
@@ -142,6 +140,7 @@ struct MatchListView: View {
             }
             .buttonStyle(.plain)
             .help("New match")
+            .accessibilityLabel("New match")
 
             Button {
                 // Deleting many matches at once is unrecoverable — confirm first.
@@ -155,6 +154,7 @@ struct MatchListView: View {
             }
             .buttonStyle(.plain)
             .help(selectedMatchIDs.count > 1 ? "Delete \(selectedMatchIDs.count) matches" : "Delete selected match")
+            .accessibilityLabel(selectedMatchIDs.count > 1 ? "Delete \(selectedMatchIDs.count) matches" : "Delete selected match")
             .disabled(selectedMatchIDs.isEmpty)
             .confirmationDialog(
                 "Delete \(selectedMatchIDs.count) matches?",
@@ -203,10 +203,11 @@ struct MatchListView: View {
             .menuIndicator(.hidden)
             .fixedSize()
             .help("Sort matches")
+            .accessibilityLabel("Sort matches")
 
             Spacer()
 
-            Text(countLabel)
+            Text(countLabel(shown: shown))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
 
@@ -225,9 +226,8 @@ struct MatchListView: View {
         .padding(.vertical, 6)
     }
 
-    private var countLabel: String {
+    private func countLabel(shown: Int) -> String {
         let total = store.allMatches.count
-        let shown = filteredMatches.count
         if shown == total {
             return "\(total) match\(total == 1 ? "" : "es")"
         } else {
@@ -246,16 +246,16 @@ struct MatchListView: View {
         return false
     }
 
-    private var flatList: some View {
+    private func flatList(_ matches: [EspansoMatch]) -> some View {
         let conflicted = conflictedTriggers
-        return List(filteredMatches, id: \.id, selection: $selectedMatchIDs) { match in
+        return List(matches, id: \.id, selection: $selectedMatchIDs) { match in
             MatchRowView(match: match, isConflicted: hasConflict(match, in: conflicted))
                 .contextMenu { rowContextMenu(for: match.id) }
         }
         .listStyle(.sidebar)
         .background(
             // Hidden button so ⌘D works even when the row context menu is closed.
-            Button("Duplicate") { duplicateSelected() }
+            Button("Duplicate") { if let id = singleSelectedMatchID { duplicate(id) } }
                 .keyboardShortcut("d", modifiers: .command)
                 .disabled(singleSelectedMatchID == nil)
                 .opacity(0)
@@ -265,10 +265,9 @@ struct MatchListView: View {
 
     @ViewBuilder
     private func rowContextMenu(for matchID: UUID) -> some View {
-        Button("Duplicate") {
-            selectedMatchIDs = [matchID]
-            duplicateSelected()
-        }
+        // By explicit id: the selection may not move (unsaved-changes prompt),
+        // and the row that was right-clicked is the one to duplicate.
+        Button("Duplicate") { duplicate(matchID) }
         .keyboardShortcut("d", modifiers: .command)
 
         moveToMenu(for: matchID)
@@ -302,8 +301,7 @@ struct MatchListView: View {
         }
     }
 
-    private func duplicateSelected() {
-        guard let id = singleSelectedMatchID else { return }
+    private func duplicate(_ id: UUID) {
         do {
             let copy = try store.duplicate(matchID: id)
             selectedMatchIDs = [copy.id]
@@ -313,14 +311,9 @@ struct MatchListView: View {
     }
 
     private func deleteSelected() {
-        let ids = selectedMatchIDs
-        var firstError: String?
-        for id in ids {
-            do { try store.delete(matchID: id) }
-            catch { firstError = firstError ?? error.localizedDescription }
-        }
+        do { try store.delete(matchIDs: selectedMatchIDs) }
+        catch { deleteError = error.localizedDescription }
         selectedMatchIDs = []
-        if let err = firstError { deleteError = err }
     }
 }
 

@@ -14,7 +14,8 @@ struct FileTreeView: View {
         // Use List(selection:) so rows highlight correctly on macOS.
         // Package matches get no .tag, preventing them from being selected
         // (allMatches excludes package files, so the editor panel can't display them).
-        List(store.matchFiles, id: \.id, selection: $selectedMatchIDs) { file in
+        let conflicting = conflictingFileURLs   // once per render, not once per file
+        return List(store.matchFiles, id: \.id, selection: $selectedMatchIDs) { file in
             Section {
                 ForEach(file.matches, id: \.id) { match in
                     MatchRowView(match: match)
@@ -50,7 +51,7 @@ struct FileTreeView: View {
                         .font(.caption)
                         .fontWeight(.medium)
                     Spacer()
-                    if conflictingFileURLs.contains(file.url) {
+                    if conflicting.contains(file.url) {
                         Image(systemName: "exclamationmark.2")
                             .imageScale(.small)
                             .foregroundStyle(.orange)

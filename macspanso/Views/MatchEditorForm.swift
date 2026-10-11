@@ -8,6 +8,9 @@ struct MatchEditorForm: View {
     let store: EspansoConfigStore
     let onSave: (EspansoMatch) -> Void
     let onCancel: () -> Void
+    /// Told whenever the form gains or loses unsaved edits, so the window can
+    /// ask before throwing them away.
+    var onDirtyChange: (Bool) -> Void = { _ in }
 
     @State private var draft: EspansoMatch
     @State private var useRegex: Bool
@@ -27,13 +30,15 @@ struct MatchEditorForm: View {
         sourceFile: MatchFile?,
         store: EspansoConfigStore,
         onSave: @escaping (EspansoMatch) -> Void,
-        onCancel: @escaping () -> Void
+        onCancel: @escaping () -> Void,
+        onDirtyChange: @escaping (Bool) -> Void = { _ in }
     ) {
         self.initialMatch = match
         self.sourceFile = sourceFile
         self.store = store
         self.onSave = onSave
         self.onCancel = onCancel
+        self.onDirtyChange = onDirtyChange
         _draft = State(initialValue: match)
         _useRegex = State(initialValue: match.regex != nil)
         _isFormMatch = State(initialValue: match.form != nil)
@@ -41,7 +46,13 @@ struct MatchEditorForm: View {
     }
 
     private var isNew: Bool { sourceFile == nil }
-    private var isDirty: Bool { draft != initialMatch }
+    /// Compared ignoring `id`: for a new match the caller builds a fresh
+    /// placeholder (new id) on every render, which is not an edit.
+    private var isDirty: Bool {
+        var baseline = initialMatch
+        baseline.id = draft.id
+        return draft != baseline
+    }
     private var canSave: Bool { validationErrors.isEmpty && isDirty }
 
     var body: some View {
@@ -111,6 +122,12 @@ struct MatchEditorForm: View {
             .padding(16)
         }
         .onChange(of: draft) { _ in revalidate() }
+        .onChange(of: isDirty) { onDirtyChange($0) }
+        .onAppear { onDirtyChange(isDirty) }
+        .onDisappear { onDirtyChange(false) }
+        // Not on a pristine form: hydrating the destination would otherwise
+        // flag an untouched new match as missing its trigger and replacement.
+        .onChange(of: destinationURL) { _ in if isDirty { revalidate() } }
         .alert("Unsaved Changes", isPresented: $showUnsavedAlert) {
             Button("Save") { save() }
             Button("Discard", role: .destructive) { onCancel() }
@@ -135,8 +152,11 @@ struct MatchEditorForm: View {
                     ForEach(store.writableFiles, id: \.url) { file in
                         Text(file.displayName).tag(Optional(file.url))
                     }
-                    if store.writableFiles.isEmpty {
-                        Text("base.yml").tag(Optional(defaultDestination))
+                    // A file that doesn't exist yet (New File…, or base.yml on a
+                    // fresh install) still needs a row, or the picker shows blank.
+                    if let pending = destinationBinding.wrappedValue,
+                       !store.writableFiles.contains(where: { $0.url == pending }) {
+                        Text("\(pending.lastPathComponent) (new)").tag(Optional(pending))
                     }
                 }
                 .labelsHidden()
@@ -188,11 +208,21 @@ struct MatchEditorForm: View {
         panel.allowedContentTypes = [.yaml]
         panel.nameFieldStringValue = "untitled.yml"
         panel.message = "Create a new espanso match file"
-        if panel.runModal() == .OK, let url = panel.url {
-            // Coerce the extension; espanso requires .yml.
-            let coerced = url.pathExtension == "yml" ? url : url.deletingPathExtension().appendingPathExtension("yml")
-            destinationURL = coerced
+        guard panel.runModal() == .OK, let picked = panel.url else { return }
+        // espanso loads both extensions; anything else becomes .yml.
+        var url = EspansoConfigStore.matchExtensions.contains(picked.pathExtension)
+            ? picked : picked.deletingPathExtension().appendingPathExtension("yml")
+        // Resolve the folder (the file itself doesn't exist yet) so the URL
+        // compares equal to the store's symlink-resolved URLs.
+        url = url.deletingLastPathComponent().resolvingSymlinksInPath()
+            .appendingPathComponent(url.lastPathComponent)
+        // espanso only loads match files from inside its match folder.
+        guard url.path.hasPrefix(store.matchDirectory.path + "/") else {
+            saveError = "Match files must be saved inside \(store.matchDirectory.path) — espanso won't load them from anywhere else."
+            return
         }
+        saveError = nil
+        destinationURL = url
     }
 
     private var triggerSection: some View {
@@ -294,7 +324,13 @@ struct MatchEditorForm: View {
             }
 
             validationLabel(for: .emptyTrigger, message: "Trigger is required")
-            validationLabel(for: .duplicateTrigger, message: "This trigger already exists")
+            validationLabel(for: .duplicateTrigger, message: "This trigger already exists in this file")
+            if conflictsWithOtherFile {
+                Label("Also defined in another file — espanso will only use one of them",
+                      systemImage: "exclamationmark.2")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
 
             if useRegex { regexTesterSection }
         }
@@ -321,7 +357,8 @@ struct MatchEditorForm: View {
         let pattern = draft.regex ?? ""
         if pattern.isEmpty || regexTestInput.isEmpty {
             EmptyView()
-        } else if let regex = try? NSRegularExpression(pattern: pattern) {
+        } else if let regex = try? NSRegularExpression(
+            pattern: MatchValidator.icuPattern(fromEspansoRegex: pattern)) {
             let range = NSRange(regexTestInput.startIndex..., in: regexTestInput)
             let matches = regex.matches(in: regexTestInput, range: range)
             if matches.isEmpty {
@@ -402,6 +439,8 @@ struct MatchEditorForm: View {
                         .foregroundStyle(.orange)
                 }
             }
+
+            validationLabel(for: .emptyReplacement, message: "Replacement is required")
 
             previewSection
         }
@@ -485,6 +524,28 @@ struct MatchEditorForm: View {
         )
     }
 
+    /// The file this match lives in, or will be saved to.
+    private var owningFileURL: URL {
+        sourceFile?.url ?? destinationURL ?? defaultDestination
+    }
+
+    /// Other matches in the same file as the draft.
+    private var siblingMatches: [EspansoMatch] {
+        (store.matchFiles.first { $0.url == owningFileURL }?.matches ?? [])
+            .filter { $0.id != draft.id }
+    }
+
+    /// True when one of the draft's literal triggers is also defined in a different file.
+    private var conflictsWithOtherFile: Bool {
+        let mine = Set(([draft.trigger].compactMap { $0 } + (draft.triggers ?? [])).filter { !$0.isEmpty })
+        guard !mine.isEmpty else { return false }
+        return store.matchFiles.contains { file in
+            !file.isPackage && file.url != owningFileURL && file.matches.contains { m in
+                (m.trigger.map(mine.contains) ?? false) || (m.triggers ?? []).contains(where: mine.contains)
+            }
+        }
+    }
+
     private var unresolvedVarErrors: [String] {
         validationErrors.compactMap {
             if case .unresolvedVarReference(let name) = $0 { return name }
@@ -493,9 +554,12 @@ struct MatchEditorForm: View {
     }
 
     private func revalidate() {
+        // Only a duplicate in the same file blocks saving. The same trigger in
+        // another file is a warning (see `conflictsWithOtherFile`): blocking it
+        // would make an already-conflicting match impossible to edit at all.
         var errors = MatchValidator.validate(
             draft,
-            existingMatches: store.allMatches.filter { $0.id != draft.id },
+            existingMatches: siblingMatches,
             globalVarNames: Set(store.globalVarNames)
         )
         // In form mode, {{name}} placeholders refer to form fields, not vars — suppress false positives.

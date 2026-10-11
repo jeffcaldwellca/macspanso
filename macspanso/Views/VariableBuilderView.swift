@@ -122,7 +122,9 @@ struct VarCardView: View {
             randomChoicesField
         case .echo:
             paramTextField(key: "echo", placeholder: "static value", label: "Value")
-        case .clipboard, .form, .match:
+        default:
+            // clipboard, form, match, choice, unknown: no editable params here.
+            // Any params the file carries are preserved untouched.
             EmptyView()
         }
     }

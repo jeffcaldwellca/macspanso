@@ -101,21 +101,26 @@ struct NewMatchFromClipboardIntent: AppIntent {
             return .result(dialog: "Clipboard is empty.")
         }
 
-        let success = await MainActor.run { () -> Bool in
-            guard let store = MacspansoIntents.appDelegate()?.configStore else { return false }
+        // nil on success, otherwise the reason to show the user.
+        let failure = await MainActor.run { () -> String? in
+            guard let store = MacspansoIntents.appDelegate()?.configStore else {
+                return "macspanso isn't ready yet."
+            }
             let match = EspansoMatch(trigger: trigger, replace: pasteboard)
+            let errors = MatchValidator.validate(match, existingMatches: store.allMatches)
+            if errors.contains(.emptyTrigger) { return "The trigger can't be empty." }
+            if errors.contains(.duplicateTrigger) { return "The trigger \(trigger) already exists." }
             do {
                 try store.add(match)
-                return true
+                return nil
             } catch {
-                return false
+                return error.localizedDescription
             }
         }
-        if success {
-            return .result(dialog: "Created match \(trigger).")
-        } else {
-            return .result(dialog: "Could not create match — macspanso may not be ready yet.")
+        if let failure {
+            return .result(dialog: "Could not create match. \(failure)")
         }
+        return .result(dialog: "Created match \(trigger).")
     }
 }
 

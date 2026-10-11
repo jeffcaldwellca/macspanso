@@ -2,9 +2,10 @@
 import AppKit
 import SwiftUI
 
-final class MatchManagerWindowController: NSWindowController {
+final class MatchManagerWindowController: NSWindowController, NSWindowDelegate {
     private let store: EspansoConfigStore
     private let processManager: EspansoProcessManager
+    private let session = EditorSession()
 
     init(store: EspansoConfigStore, processManager: EspansoProcessManager) {
         self.store = store
@@ -31,11 +32,29 @@ final class MatchManagerWindowController: NSWindowController {
 
         // Use NSHostingController (not NSHostingView) so SwiftUI gets full responder-chain
         // integration, keyboard focus cycling, and scene-environment setup.
-        let rootView = MatchManagerView(store: store, processManager: processManager)
+        let rootView = MatchManagerView(store: store, processManager: processManager, session: session)
         let hc = NSHostingController(rootView: rootView)
         panel.contentViewController = hc
 
         super.init(window: panel)
+        panel.delegate = self
+    }
+
+    /// Closing the window destroys the editor; ask first if it has unsaved edits.
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        confirmDiscardingUnsavedChanges()
+    }
+
+    /// True if there is nothing unsaved, or the user agreed to discard it.
+    func confirmDiscardingUnsavedChanges() -> Bool {
+        guard session.hasUnsavedChanges else { return true }
+        let alert = NSAlert()
+        alert.messageText = "Discard unsaved changes?"
+        alert.informativeText = "The match you're editing has changes that haven't been saved."
+        alert.addButton(withTitle: "Discard Changes")
+        alert.addButton(withTitle: "Keep Editing")
+        alert.buttons.first?.hasDestructiveAction = true
+        return alert.runModal() == .alertFirstButtonReturn
     }
 
     required init?(coder: NSCoder) { fatalError("not used") }
